@@ -20,16 +20,8 @@
 
     .row {
         display: flex;
-        align-items: center;
         justify-content: center;
         margin: 5px 0;
-    }
-
-    .row-label {
-        width: 30px;
-        text-align: right;
-        margin-right: 10px;
-        font-weight: bold;
     }
 
     .seat {
@@ -45,6 +37,7 @@
 
     .occupied {
         background-color: gray;
+        cursor: not-allowed;
     }
 
     .gap {
@@ -80,50 +73,53 @@ const nameInput = document.getElementById("name");
 
 let selectedSeat = null;
 
+// konfiguracja
 const totalRows = 20;
+const seatsPerRow = 28;
 
 for (let row = 1; row <= totalRows; row++) {
 
     const rowDiv = document.createElement("div");
     rowDiv.classList.add("row");
 
-    // numer rzędu
-    const label = document.createElement("div");
-    label.classList.add("row-label");
-    label.innerText = row;
-    rowDiv.appendChild(label);
+    let seats = seatsPerRow;
+    let start = 1;
 
-    let seats = 28;
+    // Rząd 1 (26 miejsc, brak skrajnych)
+    if (row === 1) {
+        seats = 26;
+        start = 2;
+    }
 
-    if (row === 1) seats = 26;
-    if (row === 20) seats = 14;
+    // Rząd 20 (14 miejsc, brak 7 z lewej i 7 z prawej)
+    if (row === 20) {
+        seats = 14;
+        start = 8;
+    }
 
-    for (let i = 1; i <= seats; i++) {
+    for (let i = 0; i < seats; i++) {
+        let seatNumber = start + i;
 
-        // luki (bazując na pełnym układzie)
-        if (i === 8 || i === 22) {
+        // luka między 7-8 oraz 21-22
+        if (seatNumber === 8 || seatNumber === 22) {
             const gap = document.createElement("div");
             gap.classList.add("gap");
             rowDiv.appendChild(gap);
         }
 
-        const seatId = `R${row}M${i}`;
+        const seatId = `R${row}M${seatNumber}`;
 
         const btn = document.createElement("button");
         btn.classList.add("seat");
-        btn.innerText = i;
+        btn.innerText = seatNumber;
 
-        const saved = localStorage.getItem(seatId);
-
-        if (saved) {
+        if (localStorage.getItem(seatId)) {
             btn.classList.add("occupied");
         }
 
         btn.onclick = () => {
-            const data = localStorage.getItem(seatId);
-
-            if (data) {
-                alert(`Miejsce zajęte przez:\n${data}`);
+            if (btn.classList.contains("occupied")) {
+                alert("Miejsce zajęte!");
                 return;
             }
 
@@ -136,6 +132,7 @@ for (let row = 1; row <= totalRows; row++) {
 
     hall.appendChild(rowDiv);
 
+    // luka między rzędem 10 i 11
     if (row === 10) {
         const gapRow = document.createElement("div");
         gapRow.classList.add("big-gap");
