@@ -23,19 +23,26 @@ body {
 }
 
 input { padding: 5px; min-width: 100px; }
-button { padding: 5px 10px; }
+button { padding: 5px 10px; cursor: pointer; }
+
+#hall-container {
+    width: 100%;
+    overflow-x: auto; /* przewijanie poziome na telefonach */
+}
 
 #hall {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 10px;
+    margin: 0 10px; /* marginesy boczne */
+    min-width: 700px; /* minimalna szerokość sali */
 }
 
 .row {
     display: flex;
     justify-content: center;
     margin: 5px 0;
+    flex-wrap: nowrap;
 }
 
 .seat {
@@ -100,13 +107,13 @@ button { padding: 5px 10px; }
 #modalContent input { width: 100%; padding: 10px; font-size: 16px; }
 #modalContent button { padding: 10px; font-size: 16px; cursor: pointer; }
 
-/* Responsywność dla tabletów i telefonów */
+/* Responsywność */
 @media (max-width: 768px) {
-    #hall { transform: scale(0.75); transform-origin: top center; margin: 0 20px; }
+    .seat { width: 32px; height: 32px; font-size: 12px; }
 }
 
 @media (max-width: 480px) {
-    #hall { transform: scale(0.55); transform-origin: top center; margin: 0 15px; }
+    .seat { width: 28px; height: 28px; font-size: 10px; }
 }
 </style>
 </head>
@@ -118,7 +125,9 @@ button { padding: 5px 10px; }
 </div>
 
 <div class="stage"></div>
-<div id="hall"></div>
+<div id="hall-container">
+    <div id="hall"></div>
+</div>
 
 <div id="selectedCount">Wybrane miejsca: 0</div>
 
@@ -245,7 +254,7 @@ saveModal.addEventListener("click", () => {
     });
     selectedSeats=[];
     updateSelectedCount();
-    modal.style.display = "none";
+    modal.style.display="none";
 });
 
 // Wyszukiwarka
@@ -258,6 +267,5 @@ function searchPerson(){
     });
 }
 </script>
-
 </body>
 </html>
