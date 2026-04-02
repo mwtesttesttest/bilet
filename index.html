@@ -14,6 +14,9 @@ body { font-family: Arial; text-align: center; }
     margin: 20px auto;
     line-height: 60px;
     font-weight: bold;
+    display: flex;
+    justify-content: flex-start;
+    padding-left: calc(5 * 28px / 1.2); /* scena od 5 miejsca */
 }
 
 .top-bar {
@@ -31,18 +34,18 @@ input {
 }
 
 .row.first-row {
-    transform: translateX(-15px);
+    margin-left: -20px; /* wyrównanie rzędów */
 }
 
 .seat {
-    width: 25px;
-    height: 25px;
+    width: 35px;  /* większe miejsca */
+    height: 35px;
     margin: 3px;
     background-color: green;
     color: white;
     border: none;
     cursor: pointer;
-    font-size: 10px;
+    font-size: 14px;
     transition: 0.2s;
 }
 
@@ -82,11 +85,19 @@ input {
 
 <script>
 const hall = document.getElementById("hall");
-
 let selectedSeats = [];
 
-// przykładowe zajęte miejsca (symulacja)
+// przykładowe zajęte miejsca
 let occupiedSeats = ["R1M1", "R1M2", "R3M5"];
+
+// mapa zdrobnień
+const nicknames = {
+    "bartek": "Bartosz",
+    "jarek": "Jarosław",
+    "kuba": "Jakub",
+    "ola": "Aleksandra",
+    "ania": "Anna"
+};
 
 // tworzenie sali
 for (let row = 1; row <= 20; row++) {
@@ -113,7 +124,7 @@ for (let row = 1; row <= 20; row++) {
 
         if (occupiedSeats.includes(seatId)) {
             btn.classList.add("occupied");
-            btn.dataset.name = "Jan Kowalski"; // przykładowe zajęcie
+            btn.dataset.name = "Jan Kowalski";
         }
 
         btn.onclick = () => handleSeatClick(btn, seatId);
@@ -167,9 +178,13 @@ function reserveSeats() {
     selectedSeats = [];
 }
 
-// wyszukiwarka
+// wyszukiwarka z uwzględnieniem zdrobnień
 function searchPerson() {
-    const search = document.getElementById("search").value.toLowerCase();
+    let search = document.getElementById("search").value.toLowerCase();
+
+    // zamiana zdrobnień na pełne imię
+    if (nicknames[search]) search = nicknames[search].toLowerCase();
+
     document.querySelectorAll(".seat").forEach(btn => {
         btn.classList.remove("highlight");
         if (btn.dataset.name && btn.dataset.name.toLowerCase().includes(search)) {
