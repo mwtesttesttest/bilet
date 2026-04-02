@@ -25,24 +25,30 @@ body {
 input { padding: 5px; min-width: 100px; }
 button { padding: 5px 10px; }
 
+#hall-container {
+    width: 100%;
+    overflow-x: auto; /* przewijanie poziome na telefonach */
+    display: flex;
+    justify-content: center;
+}
+
 #hall {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 5%; /* marginesy boczne */
-    width: 90%;
-    max-width: 1200px;
+    margin: 0 5px; /* marginesy boczne */
+    min-width: 700px; /* minimalna szerokość sali, żeby miejsca nie były skompresowane */
 }
 
 .row {
     display: flex;
     justify-content: center;
     margin: 5px 0;
-    flex-wrap: nowrap;
+    flex-wrap: nowrap; /* rzędy nie łamią się */
 }
 
 .seat {
-    width: 38px;
+    width: 38px;  
     height: 38px;
     margin: 3px;
     background: green;
@@ -105,13 +111,11 @@ button { padding: 5px 10px; }
 
 /* Responsywność */
 @media(max-width: 768px){
-    .seat { width: 32px; height: 32px; font-size: 12px; }
-    #hall { width: 95%; margin: 0 2.5%; }
+    .seat { width: 32px; height: 32px; font-size:12px; }
 }
 
 @media(max-width: 480px){
-    .seat { width: 28px; height: 28px; font-size: 10px; }
-    #hall { width: 98%; margin: 0 1%; }
+    .seat { width: 28px; height: 28px; font-size:10px; }
 }
 </style>
 </head>
@@ -123,7 +127,12 @@ button { padding: 5px 10px; }
 </div>
 
 <div class="stage"></div>
-<div id="hall"></div>
+
+<!-- kontener przewijalny -->
+<div id="hall-container">
+    <div id="hall"></div>
+</div>
+
 <div id="selectedCount">Wybrane miejsca: 0</div>
 <button id="reserveBtn">ZAREZERWUJ</button>
 
@@ -144,7 +153,6 @@ button { padding: 5px 10px; }
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
 
 <script>
-// konfiguracja Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCjbfpcrG8jWUKsuRNmG21UpyQY17UxJos",
   authDomain: "bilet-eeb4b.firebaseapp.com",
