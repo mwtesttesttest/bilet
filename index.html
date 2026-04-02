@@ -27,15 +27,17 @@ button { padding: 5px 10px; cursor: pointer; }
 
 #hall-container {
     width: 100%;
-    overflow-x: auto; /* przewijanie poziome na telefonach */
+    display: flex;
+    justify-content: center;
 }
 
 #hall {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 10px; /* marginesy boczne */
-    min-width: 700px; /* minimalna szerokość sali */
+    margin: 0 5px; /* margines boczny */
+    max-width: 100%; /* dopasowanie do ekranu */
+    transform-origin: top center;
 }
 
 .row {
@@ -46,14 +48,14 @@ button { padding: 5px 10px; cursor: pointer; }
 }
 
 .seat {
-    width: 38px;
-    height: 38px;
+    width: 35px;
+    height: 35px;
     margin: 3px;
     background-color: green;
     color: white;
     border: none;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
     transition: 0.2s;
 }
 
@@ -61,13 +63,13 @@ button { padding: 5px 10px; cursor: pointer; }
 .occupied { background-color: gray; cursor: not-allowed; }
 .highlight { outline: 3px solid yellow; }
 
-.gap { width: 20px; }
-.big-gap { height: 30px; }
+.gap { width: 15px; }
+.big-gap { height: 25px; }
 
 .stage {
     position: relative;
-    width: calc((22 - 6 + 1) * 44px);
-    height: 40px;
+    width: calc((22 - 6 + 1) * 39px);
+    height: 30px;
     background-color: #d2a679;
     margin-bottom: 15px;
 }
@@ -76,8 +78,8 @@ button { padding: 5px 10px; cursor: pointer; }
 
 #reserveBtn {
     margin: 20px 0;
-    padding: 15px 30px;
-    font-size: 18px;
+    padding: 12px 25px;
+    font-size: 16px;
     cursor: pointer;
 }
 
@@ -107,13 +109,15 @@ button { padding: 5px 10px; cursor: pointer; }
 #modalContent input { width: 100%; padding: 10px; font-size: 16px; }
 #modalContent button { padding: 10px; font-size: 16px; cursor: pointer; }
 
-/* Responsywność */
-@media (max-width: 768px) {
-    .seat { width: 32px; height: 32px; font-size: 12px; }
+/* Skalowanie całej sali w zależności od szerokości ekranu */
+@media(max-width: 1024px){
+    #hall { transform: scale(0.8); }
 }
-
-@media (max-width: 480px) {
-    .seat { width: 28px; height: 28px; font-size: 10px; }
+@media(max-width: 768px){
+    #hall { transform: scale(0.65); }
+}
+@media(max-width: 480px){
+    #hall { transform: scale(0.5); }
 }
 </style>
 </head>
