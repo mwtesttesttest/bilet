@@ -30,7 +30,7 @@ button { padding: 5px 10px; }
     flex-direction: column;
     align-items: center;
     margin: 0 5%; /* marginesy boczne */
-    width: 90%;   /* szerokość sali dopasowana do ekranu */
+    width: 90%;
     max-width: 1200px;
 }
 
@@ -38,20 +38,18 @@ button { padding: 5px 10px; }
     display: flex;
     justify-content: center;
     margin: 5px 0;
-    flex-wrap: nowrap; /* nie łamiemy rzędów */
-    width: 100%;
+    flex-wrap: nowrap;
 }
 
 .seat {
-    flex: 1 1 auto; /* proporcjonalne dopasowanie */
-    max-width: 38px;
+    width: 38px;
     height: 38px;
     margin: 3px;
     background: green;
     color: white;
     border: none;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 14px;
     transition: 0.2s;
 }
 
@@ -63,7 +61,7 @@ button { padding: 5px 10px; }
 .big-gap { height: 30px; }
 
 .stage {
-    width: 100%; /* dopasowanie do szerokości hall */
+    width: 100%;
     max-width: calc((22-6+1)*44px);
     height: 40px;
     background-color: #d2a679;
@@ -105,6 +103,16 @@ button { padding: 5px 10px; }
 #modalContent input { width: 100%; padding: 10px; font-size: 16px; }
 #modalContent button { padding: 10px; font-size: 16px; cursor: pointer; }
 
+/* Responsywność */
+@media(max-width: 768px){
+    .seat { width: 32px; height: 32px; font-size: 12px; }
+    #hall { width: 95%; margin: 0 2.5%; }
+}
+
+@media(max-width: 480px){
+    .seat { width: 28px; height: 28px; font-size: 10px; }
+    #hall { width: 98%; margin: 0 1%; }
+}
 </style>
 </head>
 <body>
@@ -196,7 +204,7 @@ function handleSeatClick(btn,seatId,isDrag=false){
     updateSelectedCount();
 }
 
-// Realtime update - każda zmiana w Firestore aktualizuje widok
+// Realtime update
 db.collection("seats").onSnapshot(snapshot=>{
     snapshot.docChanges().forEach(change=>{
         const id=change.doc.id;
