@@ -23,32 +23,30 @@ body {
 }
 
 input { padding: 5px; min-width: 100px; }
-button { padding: 5px 10px; }
+button { padding: 5px 10px; cursor: pointer; }
 
 #hall-container {
     width: 100%;
-    overflow-x: auto; /* przewijanie poziome na telefonach */
-    display: flex;
-    justify-content: center;
+    overflow-x: auto; /* przewijanie poziome */
 }
 
 #hall {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 5px; /* marginesy boczne */
-    min-width: 700px; /* minimalna szerokość sali, żeby miejsca nie były skompresowane */
+    margin: 0 5px;
+    min-width: 700px; /* minimalna szerokość sali */
 }
 
 .row {
     display: flex;
     justify-content: center;
     margin: 5px 0;
-    flex-wrap: nowrap; /* rzędy nie łamią się */
+    flex-wrap: nowrap;
 }
 
 .seat {
-    width: 38px;  
+    width: 38px;
     height: 38px;
     margin: 3px;
     background: green;
@@ -80,7 +78,6 @@ button { padding: 5px 10px; }
     margin: 20px 0;
     padding: 15px 30px;
     font-size: 18px;
-    cursor: pointer;
 }
 
 /* Modal */
@@ -107,15 +104,15 @@ button { padding: 5px 10px; }
 }
 
 #modalContent input { width: 100%; padding: 10px; font-size: 16px; }
-#modalContent button { padding: 10px; font-size: 16px; cursor: pointer; }
+#modalContent button { padding: 10px; font-size: 16px; }
 
 /* Responsywność */
 @media(max-width: 768px){
-    .seat { width: 32px; height: 32px; font-size:12px; }
+    .seat { width: 32px; height: 32px; font-size: 12px; }
 }
 
 @media(max-width: 480px){
-    .seat { width: 28px; height: 28px; font-size:10px; }
+    .seat { width: 28px; height: 28px; font-size: 10px; }
 }
 </style>
 </head>
@@ -128,7 +125,6 @@ button { padding: 5px 10px; }
 
 <div class="stage"></div>
 
-<!-- kontener przewijalny -->
 <div id="hall-container">
     <div id="hall"></div>
 </div>
@@ -136,7 +132,6 @@ button { padding: 5px 10px; }
 <div id="selectedCount">Wybrane miejsca: 0</div>
 <button id="reserveBtn">ZAREZERWUJ</button>
 
-<!-- Modal -->
 <div id="modal">
     <div id="modalContent">
         <h3>Wpisz imię i nazwisko</h3>
@@ -148,11 +143,11 @@ button { padding: 5px 10px; }
     </div>
 </div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
 
 <script>
+// konfiguracja Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCjbfpcrG8jWUKsuRNmG21UpyQY17UxJos",
   authDomain: "bilet-eeb4b.firebaseapp.com",
@@ -176,22 +171,29 @@ document.addEventListener("mouseup",()=>dragSelecting=false);
 
 function updateSelectedCount(){ selectedCountDiv.innerText=`Wybrane miejsca: ${selectedSeats.length}`; }
 
-// Tworzenie sali
+// Tworzenie sali – wszystkie miejsca bez blokad
 for(let row=1;row<=20;row++){
     const rowDiv=document.createElement("div");
     rowDiv.classList.add("row");
     let seats=28;if(row===1) seats=26;if(row===20) seats=14;
     for(let i=1;i<=seats;i++){
-        if(row!==20){
-            if(row===1){ if(i===7||i===21){ const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap); } }
-            else{ if(i===8||i===22){ const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap); } }
-        }
         const seatId=`R${row}M${i}`;
         const btn=document.createElement("button");
-        btn.classList.add("seat"); btn.id=seatId; btn.innerText=i;
+        btn.classList.add("seat");
+        btn.id=seatId;
+        btn.innerText=i;
+
+        // obsługa drag-select
         btn.addEventListener("mousedown",()=>{ dragSelecting=true; handleSeatClick(btn,seatId); });
         btn.addEventListener("mouseenter",()=>{ if(dragSelecting) handleSeatClick(btn,seatId,true); });
+
         rowDiv.appendChild(btn);
+
+        // opcjonalne luki wizualne dla rzędów
+        if(row!==20 && (i===7||i===21) && row!==1) {
+            const gap=document.createElement("div"); gap.classList.add("gap");
+            rowDiv.appendChild(gap);
+        }
     }
     hall.appendChild(rowDiv);
     if(row===10){ const gapRow=document.createElement("div"); gapRow.classList.add("big-gap"); hall.appendChild(gapRow);}
