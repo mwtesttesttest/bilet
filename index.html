@@ -2,33 +2,50 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
-<title>Rezerwacja miejsc</title>
+<title>Sala rezerwacji</title>
 <style>
     body {
         font-family: Arial;
         text-align: center;
     }
 
-    .grid {
-        display: grid;
-        grid-template-columns: repeat(8, 50px);
-        gap: 10px;
+    .stage {
+        width: 80%;
+        height: 60px;
+        background-color: #d2a679;
+        margin: 20px auto;
+        line-height: 60px;
+        font-weight: bold;
+    }
+
+    .row {
+        display: flex;
         justify-content: center;
-        margin-top: 20px;
+        margin: 5px 0;
     }
 
     .seat {
-        width: 50px;
-        height: 50px;
+        width: 25px;
+        height: 25px;
+        margin: 3px;
         background-color: green;
         color: white;
         border: none;
         cursor: pointer;
+        font-size: 10px;
     }
 
     .occupied {
         background-color: gray;
         cursor: not-allowed;
+    }
+
+    .gap {
+        width: 20px;
+    }
+
+    .big-gap {
+        height: 30px;
     }
 
     #form {
@@ -39,60 +56,101 @@
 </head>
 <body>
 
-<h1>Wybierz miejsce</h1>
+<div class="stage">SCENA</div>
 
-<div class="grid" id="grid"></div>
+<div id="hall"></div>
 
 <div id="form">
-    <h3>Podaj dane</h3>
+    <h3>Rezerwacja miejsca</h3>
     <input type="text" id="name" placeholder="Imię i nazwisko">
     <button onclick="reserveSeat()">Zarezerwuj</button>
 </div>
 
 <script>
-    const grid = document.getElementById("grid");
-    const form = document.getElementById("form");
-    const nameInput = document.getElementById("name");
+const hall = document.getElementById("hall");
+const form = document.getElementById("form");
+const nameInput = document.getElementById("name");
 
-    let selectedSeat = null;
+let selectedSeat = null;
 
-    // Tworzenie miejsc
-    for (let i = 1; i <= 40; i++) {
+// konfiguracja
+const totalRows = 20;
+const seatsPerRow = 28;
+
+for (let row = 1; row <= totalRows; row++) {
+
+    const rowDiv = document.createElement("div");
+    rowDiv.classList.add("row");
+
+    let seats = seatsPerRow;
+    let start = 1;
+
+    // Rząd 1 (26 miejsc, brak skrajnych)
+    if (row === 1) {
+        seats = 26;
+        start = 2;
+    }
+
+    // Rząd 20 (14 miejsc, brak 7 z lewej i 7 z prawej)
+    if (row === 20) {
+        seats = 14;
+        start = 8;
+    }
+
+    for (let i = 0; i < seats; i++) {
+        let seatNumber = start + i;
+
+        // luka między 7-8 oraz 21-22 (dla standardowego układu)
+        if (seatNumber === 8 || seatNumber === 22) {
+            const gap = document.createElement("div");
+            gap.classList.add("gap");
+            rowDiv.appendChild(gap);
+        }
+
+        const seatId = `R${row}M${seatNumber}`;
+
         const btn = document.createElement("button");
         btn.classList.add("seat");
-        btn.innerText = i;
+        btn.innerText = seatNumber;
 
-        const saved = localStorage.getItem("seat_" + i);
-
-        if (saved) {
+        if (localStorage.getItem(seatId)) {
             btn.classList.add("occupied");
         }
 
         btn.onclick = () => {
             if (btn.classList.contains("occupied")) {
-                alert("To miejsce jest już zajęte!");
+                alert("Miejsce zajęte!");
                 return;
             }
 
-            selectedSeat = i;
+            selectedSeat = seatId;
             form.style.display = "block";
         };
 
-        grid.appendChild(btn);
+        rowDiv.appendChild(btn);
     }
 
-    function reserveSeat() {
-        const name = nameInput.value;
+    hall.appendChild(rowDiv);
 
-        if (!name) {
-            alert("Wpisz dane!");
-            return;
-        }
-
-        localStorage.setItem("seat_" + selectedSeat, name);
-
-        location.reload();
+    // dodatkowa luka między rzędem 10 i 11
+    if (row === 10) {
+        const gapRow = document.createElement("div");
+        gapRow.classList.add("big-gap");
+        hall.appendChild(gapRow);
     }
+}
+
+function reserveSeat() {
+    const name = nameInput.value;
+
+    if (!name) {
+        alert("Wpisz dane!");
+        return;
+    }
+
+    localStorage.setItem(selectedSeat, name);
+    location.reload();
+}
 </script>
 
 </body>
