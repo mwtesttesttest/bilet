@@ -43,6 +43,7 @@ input {
     border: none;
     cursor: pointer;
     font-size: 10px;
+    transition: 0.2s;
 }
 
 .selected {
@@ -51,6 +52,7 @@ input {
 
 .occupied {
     background-color: gray;
+    cursor: not-allowed;
 }
 
 .highlight {
@@ -78,34 +80,18 @@ input {
     <button onclick="reserveSeats()">Zarezerwuj zaznaczone</button>
 </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyCjbfpcrG8jWUKsuRNmG21UpyQY17UxJos",
-  authDomain: "bilet-eeb4b.firebaseapp.com",
-  projectId: "bilet-eeb4b",
-  storageBucket: "bilet-eeb4b.firebasestorage.app",
-  messagingSenderId: "115960304761",
-  appId: "1:115960304761:web:4ef47bb6a6e151a817b0a8",
-  measurementId: "G-JD7W37ZHN2"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
 const hall = document.getElementById("hall");
 
 let selectedSeats = [];
 
+// przykładowe zajęte miejsca (symulacja)
+let occupiedSeats = ["R1M1", "R1M2", "R3M5"];
+
 // tworzenie sali
 for (let row = 1; row <= 20; row++) {
-
     const rowDiv = document.createElement("div");
     rowDiv.classList.add("row");
-
     if (row === 1) rowDiv.classList.add("first-row");
 
     let seats = 28;
@@ -113,7 +99,6 @@ for (let row = 1; row <= 20; row++) {
     if (row === 20) seats = 14;
 
     for (let i = 1; i <= seats; i++) {
-
         if (i === 8 || i === 22) {
             const gap = document.createElement("div");
             gap.classList.add("gap");
@@ -121,14 +106,17 @@ for (let row = 1; row <= 20; row++) {
         }
 
         const seatId = `R${row}M${i}`;
-
         const btn = document.createElement("button");
         btn.classList.add("seat");
         btn.innerText = i;
         btn.id = seatId;
 
-        btn.onclick = () => handleSeatClick(btn, seatId);
+        if (occupiedSeats.includes(seatId)) {
+            btn.classList.add("occupied");
+            btn.dataset.name = "Jan Kowalski"; // przykładowe zajęcie
+        }
 
+        btn.onclick = () => handleSeatClick(btn, seatId);
         rowDiv.appendChild(btn);
     }
 
@@ -141,34 +129,13 @@ for (let row = 1; row <= 20; row++) {
     }
 }
 
-// realtime update
-db.collection("seats").onSnapshot(snapshot => {
-    snapshot.docChanges().forEach(change => {
-        const id = change.doc.id;
-        const btn = document.getElementById(id);
-
-        if (!btn) return;
-
-        if (change.type === "added" || change.type === "modified") {
-            btn.classList.add("occupied");
-            btn.dataset.name = change.doc.data().name;
-        }
-
-        if (change.type === "removed") {
-            btn.classList.remove("occupied");
-            delete btn.dataset.name;
-        }
-    });
-});
-
-// klik
+// kliknięcie miejsca
 function handleSeatClick(btn, seatId) {
-
     if (btn.classList.contains("occupied")) {
         const name = btn.dataset.name;
-
         if (confirm(`Zajęte przez: ${name}\nUsunąć rezerwację?`)) {
-            db.collection("seats").doc(seatId).delete();
+            btn.classList.remove("occupied");
+            delete btn.dataset.name;
         }
         return;
     }
@@ -182,17 +149,19 @@ function handleSeatClick(btn, seatId) {
     }
 }
 
-// rezerwacja wielu
+// rezerwacja miejsc
 function reserveSeats() {
-    const name = document.getElementById("name").value;
-
+    const name = document.getElementById("name").value.trim();
     if (!name || selectedSeats.length === 0) {
         alert("Wpisz dane i wybierz miejsca");
         return;
     }
 
     selectedSeats.forEach(seatId => {
-        db.collection("seats").doc(seatId).set({ name });
+        const btn = document.getElementById(seatId);
+        btn.classList.remove("selected");
+        btn.classList.add("occupied");
+        btn.dataset.name = name;
     });
 
     selectedSeats = [];
@@ -201,10 +170,8 @@ function reserveSeats() {
 // wyszukiwarka
 function searchPerson() {
     const search = document.getElementById("search").value.toLowerCase();
-
     document.querySelectorAll(".seat").forEach(btn => {
         btn.classList.remove("highlight");
-
         if (btn.dataset.name && btn.dataset.name.toLowerCase().includes(search)) {
             btn.classList.add("highlight");
         }
