@@ -2,6 +2,7 @@
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sala rezerwacji PRO</title>
 <style>
 body {
@@ -9,26 +10,32 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
     margin: 0;
     padding: 0;
 }
 
 .top-bar {
     margin: 20px 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
 }
 
-input { padding: 5px; }
+input { padding: 5px; flex: 1 1 150px; min-width: 100px; }
+button { padding: 5px 10px; }
 
 #hall {
     display: flex;
     flex-direction: column;
     align-items: center;
+    width: 100%;
 }
 
 .row {
     display: flex;
     justify-content: center;
+    flex-wrap: wrap;
     margin: 5px 0;
 }
 
@@ -53,10 +60,15 @@ input { padding: 5px; }
 
 .stage {
     position: relative;
-    width: calc((22 - 6 + 1) * 44px); /* scena od miejsca 6 do 22 */
+    width: calc((22 - 6 + 1) * 44px);
     height: 40px;
     background-color: #d2a679;
     margin-bottom: 15px;
+}
+
+#selectedCount {
+    margin-top: 10px;
+    font-weight: bold;
 }
 </style>
 </head>
@@ -70,13 +82,16 @@ input { padding: 5px; }
 <div class="stage"></div>
 <div id="hall"></div>
 
-<div style="margin-top:10px;">
+<div style="margin-top:10px; display:flex; flex-wrap: wrap; gap:5px; justify-content: center;">
     <input type="text" id="name" placeholder="Imię i nazwisko">
     <button onclick="reserveSeats()">Zarezerwuj zaznaczone</button>
 </div>
 
+<div id="selectedCount">Wybrane miejsca: 0</div>
+
 <script>
 const hall = document.getElementById("hall");
+const selectedCountDiv = document.getElementById("selectedCount");
 let selectedSeats = [];
 let occupiedSeats = ["R1M1","R1M2","R3M5"];
 const nicknames = {"bartek":"Bartosz","jarek":"Jarosław","kuba":"Jakub","ola":"Aleksandra","ania":"Anna"};
@@ -84,6 +99,10 @@ let dragSelecting = false;
 
 // obsługa przeciągania
 document.addEventListener("mouseup", () => dragSelecting = false);
+
+function updateSelectedCount(){
+    selectedCountDiv.innerText = `Wybrane miejsca: ${selectedSeats.length}`;
+}
 
 for (let row=1; row<=20; row++){
     const rowDiv = document.createElement("div");
@@ -129,7 +148,6 @@ for (let row=1; row<=20; row++){
     }
 }
 
-// kliknięcie miejsca
 function handleSeatClick(btn, seatId, isDrag=false){
     if(btn.classList.contains("occupied")){
         const name=btn.dataset.name;
@@ -142,9 +160,9 @@ function handleSeatClick(btn, seatId, isDrag=false){
     btn.classList.toggle("selected");
     if(selectedSeats.includes(seatId)) selectedSeats=selectedSeats.filter(s=>s!==seatId);
     else selectedSeats.push(seatId);
+    updateSelectedCount();
 }
 
-// rezerwacja miejsc
 function reserveSeats(){
     const name=document.getElementById("name").value.trim();
     if(!name || selectedSeats.length===0){ alert("Wpisz dane i wybierz miejsca"); return; }
@@ -155,9 +173,9 @@ function reserveSeats(){
         btn.dataset.name=name;
     });
     selectedSeats=[];
+    updateSelectedCount();
 }
 
-// wyszukiwarka z uwzględnieniem zdrobnień
 function searchPerson(){
     let search=document.getElementById("search").value.toLowerCase();
     if(nicknames[search]) search=nicknames[search].toLowerCase();
