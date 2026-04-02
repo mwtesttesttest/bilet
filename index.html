@@ -26,7 +26,8 @@ input { padding: 5px; min-width: 100px; }
 button { padding: 5px 10px; cursor: pointer; }
 
 #hall-container {
-    width: 100%;
+    width: 95%;
+    max-width: 1000px;
     display: flex;
     justify-content: center;
 }
@@ -35,9 +36,7 @@ button { padding: 5px 10px; cursor: pointer; }
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 5px; /* margines boczny */
-    max-width: 100%; /* dopasowanie do ekranu */
-    transform-origin: top center;
+    width: 100%;
 }
 
 .row {
@@ -48,27 +47,28 @@ button { padding: 5px 10px; cursor: pointer; }
 }
 
 .seat {
-    width: 35px;
-    height: 35px;
-    margin: 3px;
+    flex: 1 0 auto;
+    margin: 2px;
     background-color: green;
     color: white;
     border: none;
     cursor: pointer;
     font-size: 12px;
+    height: 35px;
     transition: 0.2s;
+    min-width: 20px;
 }
 
 .selected { background-color: orange; }
 .occupied { background-color: gray; cursor: not-allowed; }
 .highlight { outline: 3px solid yellow; }
 
-.gap { width: 15px; }
+.gap { width: 5%; }
 .big-gap { height: 25px; }
 
 .stage {
-    position: relative;
-    width: calc((22 - 6 + 1) * 39px);
+    width: 95%;
+    max-width: 800px;
     height: 30px;
     background-color: #d2a679;
     margin-bottom: 15px;
@@ -109,16 +109,6 @@ button { padding: 5px 10px; cursor: pointer; }
 #modalContent input { width: 100%; padding: 10px; font-size: 16px; }
 #modalContent button { padding: 10px; font-size: 16px; cursor: pointer; }
 
-/* Skalowanie całej sali w zależności od szerokości ekranu */
-@media(max-width: 1024px){
-    #hall { transform: scale(0.8); }
-}
-@media(max-width: 768px){
-    #hall { transform: scale(0.65); }
-}
-@media(max-width: 480px){
-    #hall { transform: scale(0.5); }
-}
 </style>
 </head>
 <body>
@@ -174,6 +164,7 @@ for (let row=1; row<=20; row++){
     if(row===20) seats=14;
 
     for(let i=1; i<=seats; i++){
+        // Podziałki w rzędach
         if(row!==20){
             if(row===1){
                 if(i===7 || i===21){ const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);}
