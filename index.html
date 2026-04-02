@@ -17,25 +17,24 @@ body {
 .top-bar {
     margin: 20px 0;
     display: flex;
-    flex-wrap: wrap;
     justify-content: center;
     gap: 5px;
+    flex-wrap: wrap;
 }
 
-input { padding: 5px; flex: 1 1 150px; min-width: 100px; }
+input { padding: 5px; min-width: 100px; }
 button { padding: 5px 10px; }
 
 #hall {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
+    transform-origin: top center; /* punkt skalowania dla całej sali */
 }
 
 .row {
     display: flex;
     justify-content: center;
-    flex-wrap: wrap;
     margin: 5px 0;
 }
 
@@ -66,9 +65,15 @@ button { padding: 5px 10px; }
     margin-bottom: 15px;
 }
 
-#selectedCount {
-    margin-top: 10px;
-    font-weight: bold;
+#selectedCount { margin-top: 10px; font-weight: bold; }
+
+/* MEDIA QUERIES - skalowanie dla małych ekranów */
+@media (max-width: 768px) { /* tablet */
+    #hall { transform: scale(0.7); }
+}
+
+@media (max-width: 480px) { /* telefon */
+    #hall { transform: scale(0.55); }
 }
 </style>
 </head>
@@ -82,7 +87,7 @@ button { padding: 5px 10px; }
 <div class="stage"></div>
 <div id="hall"></div>
 
-<div style="margin-top:10px; display:flex; flex-wrap: wrap; gap:5px; justify-content: center;">
+<div style="margin-top:10px; display:flex; gap:5px; justify-content: center; flex-wrap: wrap;">
     <input type="text" id="name" placeholder="Imię i nazwisko">
     <button onclick="reserveSeats()">Zarezerwuj zaznaczone</button>
 </div>
@@ -97,7 +102,6 @@ let occupiedSeats = ["R1M1","R1M2","R3M5"];
 const nicknames = {"bartek":"Bartosz","jarek":"Jarosław","kuba":"Jakub","ola":"Aleksandra","ania":"Anna"};
 let dragSelecting = false;
 
-// obsługa przeciągania
 document.addEventListener("mouseup", () => dragSelecting = false);
 
 function updateSelectedCount(){
@@ -113,7 +117,6 @@ for (let row=1; row<=20; row++){
     if(row===20) seats=14;
 
     for(let i=1; i<=seats; i++){
-        // luk w rzedach 1-19 między strefami
         if(row!==20){
             if(row===1){
                 if(i===7 || i===21){ const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);}
