@@ -24,6 +24,11 @@
         margin: 5px 0;
     }
 
+    /* przesunięcie pierwszego rzędu */
+    .row.first-row {
+        transform: translateX(-15px);
+    }
+
     .seat {
         width: 25px;
         height: 25px;
@@ -73,7 +78,6 @@ const nameInput = document.getElementById("name");
 
 let selectedSeat = null;
 
-// konfiguracja
 const totalRows = 20;
 const seatsPerRow = 28;
 
@@ -82,25 +86,29 @@ for (let row = 1; row <= totalRows; row++) {
     const rowDiv = document.createElement("div");
     rowDiv.classList.add("row");
 
+    if (row === 1) {
+        rowDiv.classList.add("first-row");
+    }
+
     let seats = seatsPerRow;
     let start = 1;
 
-    // Rząd 1 (26 miejsc, brak skrajnych)
+    // Rząd 1 → 26 miejsc, numeracja od 1
     if (row === 1) {
         seats = 26;
-        start = 2;
+        start = 1;
     }
 
-    // Rząd 20 (14 miejsc, brak 7 z lewej i 7 z prawej)
+    // Rząd 20 → 14 miejsc, numeracja od 1
     if (row === 20) {
         seats = 14;
-        start = 8;
+        start = 1;
     }
 
     for (let i = 0; i < seats; i++) {
         let seatNumber = start + i;
 
-        // luka między 7-8 oraz 21-22
+        // luki (oparte o "pełny układ")
         if (seatNumber === 8 || seatNumber === 22) {
             const gap = document.createElement("div");
             gap.classList.add("gap");
@@ -132,7 +140,6 @@ for (let row = 1; row <= totalRows; row++) {
 
     hall.appendChild(rowDiv);
 
-    // luka między rzędem 10 i 11
     if (row === 10) {
         const gapRow = document.createElement("div");
         gapRow.classList.add("big-gap");
