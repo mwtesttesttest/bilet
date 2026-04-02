@@ -29,7 +29,8 @@ button { padding: 5px 10px; }
     display: flex;
     flex-direction: column;
     align-items: center;
-    transform-origin: top center; /* punkt skalowania dla całej sali */
+    transform-origin: top center;
+    margin: 0 10px; /* domyślne boczne marginesy */
 }
 
 .row {
@@ -67,13 +68,13 @@ button { padding: 5px 10px; }
 
 #selectedCount { margin-top: 10px; font-weight: bold; }
 
-/* MEDIA QUERIES - skalowanie dla małych ekranów */
+/* MEDIA QUERIES - skalowanie i marginesy dla tabletów i telefonów */
 @media (max-width: 768px) { /* tablet */
-    #hall { transform: scale(0.7); }
+    #hall { transform: scale(0.7); margin: 0 20px; }
 }
 
 @media (max-width: 480px) { /* telefon */
-    #hall { transform: scale(0.55); }
+    #hall { transform: scale(0.55); margin: 0 15px; }
 }
 </style>
 </head>
