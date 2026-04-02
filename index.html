@@ -4,29 +4,33 @@
 <meta charset="UTF-8">
 <title>Sala rezerwacji PRO</title>
 <style>
-body { font-family: Arial; text-align: center; }
-
-.stage {
-    width: 80%;
-    height: 40px;
-    background-color: #d2a679;
-    margin: 20px auto;
-    line-height: 40px;
-    font-weight: bold;
+body {
+    font-family: Arial;
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: flex-start;
-    padding-left: calc(4 * 38px + 12px); /* scena od miejsca 5/6 */
-    padding-right: calc(4 * 38px + 12px);
+    margin: 0;
+    padding: 0;
 }
 
 .top-bar {
-    margin: 10px;
+    margin: 20px 0;
 }
 
 input { padding: 5px; }
 
-.row { display: flex; justify-content: flex-start; margin: 5px 0; }
-.row.first-row { margin-left: 38px; } /* przesunięcie rzędu 1 */
+#hall {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.row {
+    display: flex;
+    justify-content: center;
+    margin: 5px 0;
+}
 
 .seat {
     width: 38px;
@@ -47,6 +51,13 @@ input { padding: 5px; }
 .gap { width: 20px; }
 .big-gap { height: 30px; }
 
+.stage {
+    position: relative;
+    width: calc((22 - 6 + 1) * 44px); /* scena od miejsca 6 do 22 */
+    height: 40px;
+    background-color: #d2a679;
+    margin-bottom: 15px;
+}
 </style>
 </head>
 <body>
@@ -56,10 +67,10 @@ input { padding: 5px; }
     <button onclick="searchPerson()">Szukaj</button>
 </div>
 
-<div class="stage">SCENA</div>
+<div class="stage"></div>
 <div id="hall"></div>
 
-<div>
+<div style="margin-top:10px;">
     <input type="text" id="name" placeholder="Imię i nazwisko">
     <button onclick="reserveSeats()">Zarezerwuj zaznaczone</button>
 </div>
@@ -69,80 +80,90 @@ const hall = document.getElementById("hall");
 let selectedSeats = [];
 let occupiedSeats = ["R1M1","R1M2","R3M5"];
 const nicknames = {"bartek":"Bartosz","jarek":"Jarosław","kuba":"Jakub","ola":"Aleksandra","ania":"Anna"};
+let dragSelecting = false;
 
-for (let row = 1; row <= 20; row++) {
+// obsługa przeciągania
+document.addEventListener("mouseup", () => dragSelecting = false);
+
+for (let row=1; row<=20; row++){
     const rowDiv = document.createElement("div");
     rowDiv.classList.add("row");
-    if (row === 1) rowDiv.classList.add("first-row");
 
     let seats = 28;
-    if (row === 1) seats = 26;
-    if (row === 20) seats = 14;
+    if(row===1) seats=26;
+    if(row===20) seats=14;
 
-    for (let i = 1; i <= seats; i++) {
+    for(let i=1; i<=seats; i++){
+        // luk w rzedach 1-19 między strefami
+        if(row!==20){
+            if(row===1){
+                if(i===7 || i===21){ const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);}
+            } else {
+                if(i===8 || i===22){ const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);}
+            }
+        }
+
         const seatId = `R${row}M${i}`;
-        const btn = document.createElement("button");
+        const btn=document.createElement("button");
         btn.classList.add("seat");
-        btn.innerText = i;
-        btn.id = seatId;
+        btn.id=seatId;
+        btn.innerText=i;
 
-        // dodanie luk
-        if ((row !== 20) && (i === 8 || i === 22)) {
-            const gap = document.createElement("div");
-            gap.classList.add("gap");
-            rowDiv.appendChild(gap);
-        }
-
-        if (occupiedSeats.includes(seatId)) {
+        if(occupiedSeats.includes(seatId)){
             btn.classList.add("occupied");
-            btn.dataset.name = "Jan Kowalski";
+            btn.dataset.name="Jan Kowalski";
         }
 
-        btn.onclick = () => handleSeatClick(btn, seatId);
+        btn.addEventListener("mousedown", () => { dragSelecting=true; handleSeatClick(btn, seatId); });
+        btn.addEventListener("mouseenter", () => { if(dragSelecting) handleSeatClick(btn, seatId, true); });
+
         rowDiv.appendChild(btn);
     }
 
     hall.appendChild(rowDiv);
 
-    if (row === 10) {
+    if(row===10){
         const gapRow = document.createElement("div");
         gapRow.classList.add("big-gap");
         hall.appendChild(gapRow);
     }
 }
 
-function handleSeatClick(btn, seatId) {
-    if (btn.classList.contains("occupied")) {
-        const name = btn.dataset.name;
-        if (confirm(`Zajęte przez: ${name}\nUsunąć rezerwację?`)) {
+// kliknięcie miejsca
+function handleSeatClick(btn, seatId, isDrag=false){
+    if(btn.classList.contains("occupied")){
+        const name=btn.dataset.name;
+        if(!isDrag && confirm(`Zajęte przez: ${name}\nUsunąć rezerwację?`)){
             btn.classList.remove("occupied");
             delete btn.dataset.name;
         }
         return;
     }
     btn.classList.toggle("selected");
-    if (selectedSeats.includes(seatId)) selectedSeats = selectedSeats.filter(s=>s!==seatId);
+    if(selectedSeats.includes(seatId)) selectedSeats=selectedSeats.filter(s=>s!==seatId);
     else selectedSeats.push(seatId);
 }
 
-function reserveSeats() {
-    const name = document.getElementById("name").value.trim();
-    if (!name || selectedSeats.length===0) { alert("Wpisz dane i wybierz miejsca"); return; }
+// rezerwacja miejsc
+function reserveSeats(){
+    const name=document.getElementById("name").value.trim();
+    if(!name || selectedSeats.length===0){ alert("Wpisz dane i wybierz miejsca"); return; }
     selectedSeats.forEach(seatId=>{
-        const btn = document.getElementById(seatId);
+        const btn=document.getElementById(seatId);
         btn.classList.remove("selected");
         btn.classList.add("occupied");
-        btn.dataset.name = name;
+        btn.dataset.name=name;
     });
     selectedSeats=[];
 }
 
-function searchPerson() {
-    let search = document.getElementById("search").value.toLowerCase();
-    if (nicknames[search]) search = nicknames[search].toLowerCase();
+// wyszukiwarka z uwzględnieniem zdrobnień
+function searchPerson(){
+    let search=document.getElementById("search").value.toLowerCase();
+    if(nicknames[search]) search=nicknames[search].toLowerCase();
     document.querySelectorAll(".seat").forEach(btn=>{
         btn.classList.remove("highlight");
-        if (btn.dataset.name && btn.dataset.name.toLowerCase().includes(search)) btn.classList.add("highlight");
+        if(btn.dataset.name && btn.dataset.name.toLowerCase().includes(search)) btn.classList.add("highlight");
     });
 }
 </script>
