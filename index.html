@@ -3,16 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- ŁADNA CZCIONKA -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
 <title>Sala rezerwacji PRO</title>
+
 <style>
 body {
-    font-family: Arial;
+    font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
+
+/* (Twoje style zostają) */
 
 .top-bar {
     margin: 20px 0;
@@ -35,8 +42,8 @@ button { padding: 5px 10px; cursor: pointer; }
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 5px; /* margines boczny */
-    max-width: 100%; /* dopasowanie do ekranu */
+    margin: 0 5px;
+    max-width: 100%;
     transform-origin: top center;
 }
 
@@ -44,7 +51,6 @@ button { padding: 5px 10px; cursor: pointer; }
     display: flex;
     justify-content: center;
     margin: 5px 0;
-    flex-wrap: nowrap;
 }
 
 .seat {
@@ -56,7 +62,6 @@ button { padding: 5px 10px; cursor: pointer; }
     border: none;
     cursor: pointer;
     font-size: 12px;
-    transition: 0.2s;
 }
 
 .selected { background-color: orange; }
@@ -67,7 +72,6 @@ button { padding: 5px 10px; cursor: pointer; }
 .big-gap { height: 25px; }
 
 .stage {
-    position: relative;
     width: calc((22 - 6 + 1) * 39px);
     height: 30px;
     background-color: #d2a679;
@@ -80,45 +84,69 @@ button { padding: 5px 10px; cursor: pointer; }
     margin: 20px 0;
     padding: 12px 25px;
     font-size: 16px;
-    cursor: pointer;
 }
 
-/* Modal */
+/* 🔥 NOWY ŁADNY MODAL */
 #modal {
     display: none;
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0,0,0,0.6);
     justify-content: center;
     align-items: center;
-    z-index: 100;
 }
 
 #modalContent {
     background: white;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 25px;
+    border-radius: 15px;
     width: 90%;
-    max-width: 400px;
+    max-width: 350px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    animation: fadeIn 0.2s ease;
+}
+
+#modalContent h3 {
+    margin-bottom: 5px;
+}
+
+#modalContent input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-top: 10px;
+}
+
+.modal-buttons {
     display: flex;
-    flex-direction: column;
     gap: 10px;
+    margin-top: 15px;
 }
 
-#modalContent input { width: 100%; padding: 10px; font-size: 16px; }
-#modalContent button { padding: 10px; font-size: 16px; cursor: pointer; }
+.modal-buttons button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+}
 
-/* Skalowanie całej sali w zależności od szerokości ekranu */
-@media(max-width: 1024px){
-    #hall { transform: scale(0.8); }
+#cancelModal { background: #eee; }
+#saveModal { background: #4CAF50; color: white; }
+
+@keyframes fadeIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
-@media(max-width: 768px){
-    #hall { transform: scale(0.65); }
-}
-@media(max-width: 480px){
-    #hall { transform: scale(0.5); }
-}
+
+/* Twoje skalowanie zostaje */
+@media(max-width: 1024px){ #hall { transform: scale(0.8); } }
+@media(max-width: 768px){ #hall { transform: scale(0.65); } }
+@media(max-width: 480px){ #hall { transform: scale(0.5); } }
+
 </style>
 </head>
 <body>
@@ -129,6 +157,7 @@ button { padding: 5px 10px; cursor: pointer; }
 </div>
 
 <div class="stage"></div>
+
 <div id="hall-container">
     <div id="hall"></div>
 </div>
@@ -137,64 +166,90 @@ button { padding: 5px 10px; cursor: pointer; }
 
 <button id="reserveBtn">ZAREZERWUJ</button>
 
-<!-- Modal -->
+<!-- MODAL -->
 <div id="modal">
     <div id="modalContent">
-        <h3>Wpisz imię i nazwisko</h3>
-        <input type="text" id="modalName" placeholder="Imię i nazwisko">
-        <div style="display:flex; justify-content: space-between;">
-            <button id="cancelModal">ANULUJ</button>
-            <button id="saveModal">ZAPISZ</button>
+        <h3>Rezerwacja</h3>
+        <p>Podaj imię i nazwisko</p>
+        <input type="text" id="modalName">
+        <div class="modal-buttons">
+            <button id="cancelModal">Anuluj</button>
+            <button id="saveModal">Zapisz</button>
         </div>
     </div>
 </div>
 
+<!-- 🔥 FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+
 <script>
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "bilet-eeb4b.firebaseapp.com",
+  projectId: "bilet-eeb4b",
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 const hall = document.getElementById("hall");
 const selectedCountDiv = document.getElementById("selectedCount");
 let selectedSeats = [];
-let occupiedSeats = ["R1M1","R1M2","R3M5"];
-const nicknames = {"bartek":"Bartosz","jarek":"Jarosław","kuba":"Jakub","ola":"Aleksandra","ania":"Anna"};
 let dragSelecting = false;
 
-// Drag-select
-document.addEventListener("mouseup", () => dragSelecting = false);
+// realtime update
+db.collection("seats").onSnapshot(snapshot=>{
+    snapshot.docChanges().forEach(change=>{
+        const id = change.doc.id;
+        const btn = document.getElementById(id);
+        if(!btn) return;
+
+        if(change.type==="added" || change.type==="modified"){
+            btn.classList.add("occupied");
+            btn.dataset.name = change.doc.data().name;
+            btn.classList.remove("selected");
+        }
+
+        if(change.type==="removed"){
+            btn.classList.remove("occupied");
+            delete btn.dataset.name;
+        }
+    });
+});
+
+document.addEventListener("mouseup",()=>dragSelecting=false);
 
 function updateSelectedCount(){
-    selectedCountDiv.innerText = `Wybrane miejsca: ${selectedSeats.length}`;
+    selectedCountDiv.innerText=`Wybrane miejsca: ${selectedSeats.length}`;
 }
 
-// Tworzenie sali
+// tworzenie sali (BEZ ZMIAN)
 for (let row=1; row<=20; row++){
-    const rowDiv = document.createElement("div");
+    const rowDiv=document.createElement("div");
     rowDiv.classList.add("row");
 
-    let seats = 28;
+    let seats=28;
     if(row===1) seats=26;
     if(row===20) seats=14;
 
-    for(let i=1; i<=seats; i++){
+    for(let i=1;i<=seats;i++){
         if(row!==20){
             if(row===1){
-                if(i===7 || i===21){ const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);}
+                if(i===7||i===21){const gap=document.createElement("div");gap.classList.add("gap");rowDiv.appendChild(gap);}
             } else {
-                if(i===8 || i===22){ const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);}
+                if(i===8||i===22){const gap=document.createElement("div");gap.classList.add("gap");rowDiv.appendChild(gap);}
             }
         }
 
-        const seatId = `R${row}M${i}`;
+        const seatId=`R${row}M${i}`;
         const btn=document.createElement("button");
         btn.classList.add("seat");
         btn.id=seatId;
         btn.innerText=i;
 
-        if(occupiedSeats.includes(seatId)){
-            btn.classList.add("occupied");
-            btn.dataset.name="Jan Kowalski";
-        }
-
-        btn.addEventListener("mousedown", () => { dragSelecting=true; handleSeatClick(btn, seatId); });
-        btn.addEventListener("mouseenter", () => { if(dragSelecting) handleSeatClick(btn, seatId, true); });
+        btn.addEventListener("mousedown",()=>{dragSelecting=true;handleSeatClick(btn,seatId);});
+        btn.addEventListener("mouseenter",()=>{if(dragSelecting)handleSeatClick(btn,seatId,true);});
 
         rowDiv.appendChild(btn);
     }
@@ -202,74 +257,68 @@ for (let row=1; row<=20; row++){
     hall.appendChild(rowDiv);
 
     if(row===10){
-        const gapRow = document.createElement("div");
+        const gapRow=document.createElement("div");
         gapRow.classList.add("big-gap");
         hall.appendChild(gapRow);
     }
 }
 
-function handleSeatClick(btn, seatId, isDrag=false){
+function handleSeatClick(btn,seatId,isDrag=false){
     if(btn.classList.contains("occupied")){
         const name=btn.dataset.name;
-        if(!isDrag && confirm(`Zajęte przez: ${name}\nUsunąć rezerwację?`)){
-            btn.classList.remove("occupied");
-            delete btn.dataset.name;
+        if(!isDrag && confirm(`Zajęte przez: ${name}\nUsunąć?`)){
+            db.collection("seats").doc(seatId).delete();
         }
         return;
     }
+
     btn.classList.toggle("selected");
-    if(selectedSeats.includes(seatId)) selectedSeats = selectedSeats.filter(s=>s!==seatId);
-    else selectedSeats.push(seatId);
+
+    if(selectedSeats.includes(seatId)){
+        selectedSeats=selectedSeats.filter(s=>s!==seatId);
+    } else {
+        selectedSeats.push(seatId);
+    }
+
     updateSelectedCount();
 }
 
-// Modal logic
-const reserveBtn = document.getElementById("reserveBtn");
-const modal = document.getElementById("modal");
-const modalName = document.getElementById("modalName");
-const cancelModal = document.getElementById("cancelModal");
-const saveModal = document.getElementById("saveModal");
+// modal
+const reserveBtn=document.getElementById("reserveBtn");
+const modal=document.getElementById("modal");
+const modalName=document.getElementById("modalName");
 
-reserveBtn.addEventListener("click", () => {
-    if(selectedSeats.length === 0){
-        alert("Wybierz przynajmniej jedno miejsce.");
-        return;
-    }
-    modal.style.display = "flex";
-    modalName.value = "";
-    modalName.focus();
-});
+reserveBtn.onclick=()=>{
+    if(selectedSeats.length===0) return alert("Wybierz miejsca");
+    modal.style.display="flex";
+};
 
-cancelModal.addEventListener("click", () => {
-    modal.style.display = "none";
-});
+document.getElementById("cancelModal").onclick=()=>modal.style.display="none";
 
-saveModal.addEventListener("click", () => {
-    const name = modalName.value.trim();
-    if(!name){
-        alert("Wpisz imię i nazwisko.");
-        return;
-    }
-    selectedSeats.forEach(seatId=>{
-        const btn=document.getElementById(seatId);
-        btn.classList.remove("selected");
-        btn.classList.add("occupied");
-        btn.dataset.name=name;
+document.getElementById("saveModal").onclick=()=>{
+    const name=modalName.value.trim();
+    if(!name) return alert("Wpisz dane");
+
+    selectedSeats.forEach(id=>{
+        db.collection("seats").doc(id).set({name});
     });
+
     selectedSeats=[];
     updateSelectedCount();
     modal.style.display="none";
-});
+};
 
-// Wyszukiwarka
+// wyszukiwarka
 function searchPerson(){
-    let search=document.getElementById("search").value.toLowerCase();
-    if(nicknames[search]) search=nicknames[search].toLowerCase();
+    const search=document.getElementById("search").value.toLowerCase();
     document.querySelectorAll(".seat").forEach(btn=>{
         btn.classList.remove("highlight");
-        if(btn.dataset.name && btn.dataset.name.toLowerCase().includes(search)) btn.classList.add("highlight");
+        if(btn.dataset.name && btn.dataset.name.toLowerCase().includes(search)){
+            btn.classList.add("highlight");
+        }
     });
 }
 </script>
+
 </body>
 </html>
