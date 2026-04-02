@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Rezerwacja miejsc</title>
+<style>
+    body {
+        font-family: Arial;
+        text-align: center;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(8, 50px);
+        gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .seat {
+        width: 50px;
+        height: 50px;
+        background-color: green;
+        color: white;
+        border: none;
+        cursor: pointer;
+    }
+
+    .occupied {
+        background-color: gray;
+        cursor: not-allowed;
+    }
+
+    #form {
+        margin-top: 20px;
+        display: none;
+    }
+</style>
+</head>
+<body>
+
+<h1>Wybierz miejsce</h1>
+
+<div class="grid" id="grid"></div>
+
+<div id="form">
+    <h3>Podaj dane</h3>
+    <input type="text" id="name" placeholder="Imię i nazwisko">
+    <button onclick="reserveSeat()">Zarezerwuj</button>
+</div>
+
+<script>
+    const grid = document.getElementById("grid");
+    const form = document.getElementById("form");
+    const nameInput = document.getElementById("name");
+
+    let selectedSeat = null;
+
+    // Tworzenie miejsc
+    for (let i = 1; i <= 40; i++) {
+        const btn = document.createElement("button");
+        btn.classList.add("seat");
+        btn.innerText = i;
+
+        const saved = localStorage.getItem("seat_" + i);
+
+        if (saved) {
+            btn.classList.add("occupied");
+        }
+
+        btn.onclick = () => {
+            if (btn.classList.contains("occupied")) {
+                alert("To miejsce jest już zajęte!");
+                return;
+            }
+
+            selectedSeat = i;
+            form.style.display = "block";
+        };
+
+        grid.appendChild(btn);
+    }
+
+    function reserveSeat() {
+        const name = nameInput.value;
+
+        if (!name) {
+            alert("Wpisz dane!");
+            return;
+        }
+
+        localStorage.setItem("seat_" + selectedSeat, name);
+
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
