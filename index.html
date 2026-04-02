@@ -3,43 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <title>Sala rezerwacji PRO</title>
-
 <style>
 body { font-family: Arial; text-align: center; }
 
 .stage {
     width: 80%;
-    height: 60px;
+    height: 40px;
     background-color: #d2a679;
     margin: 20px auto;
-    line-height: 60px;
+    line-height: 40px;
     font-weight: bold;
     display: flex;
     justify-content: flex-start;
-    padding-left: calc(5 * 28px / 1.2); /* scena od 5 miejsca */
+    padding-left: calc(4 * 38px + 12px); /* scena od miejsca 5/6 */
+    padding-right: calc(4 * 38px + 12px);
 }
 
 .top-bar {
     margin: 10px;
 }
 
-input {
-    padding: 5px;
-}
+input { padding: 5px; }
 
-.row {
-    display: flex;
-    justify-content: center;
-    margin: 5px 0;
-}
-
-.row.first-row {
-    margin-left: -20px; /* wyrównanie rzędów */
-}
+.row { display: flex; justify-content: flex-start; margin: 5px 0; }
+.row.first-row { margin-left: 38px; } /* przesunięcie rzędu 1 */
 
 .seat {
-    width: 35px;  /* większe miejsca */
-    height: 35px;
+    width: 38px;
+    height: 38px;
     margin: 3px;
     background-color: green;
     color: white;
@@ -49,18 +40,9 @@ input {
     transition: 0.2s;
 }
 
-.selected {
-    background-color: orange;
-}
-
-.occupied {
-    background-color: gray;
-    cursor: not-allowed;
-}
-
-.highlight {
-    outline: 3px solid yellow;
-}
+.selected { background-color: orange; }
+.occupied { background-color: gray; cursor: not-allowed; }
+.highlight { outline: 3px solid yellow; }
 
 .gap { width: 20px; }
 .big-gap { height: 30px; }
@@ -75,7 +57,6 @@ input {
 </div>
 
 <div class="stage">SCENA</div>
-
 <div id="hall"></div>
 
 <div>
@@ -86,20 +67,9 @@ input {
 <script>
 const hall = document.getElementById("hall");
 let selectedSeats = [];
+let occupiedSeats = ["R1M1","R1M2","R3M5"];
+const nicknames = {"bartek":"Bartosz","jarek":"Jarosław","kuba":"Jakub","ola":"Aleksandra","ania":"Anna"};
 
-// przykładowe zajęte miejsca
-let occupiedSeats = ["R1M1", "R1M2", "R3M5"];
-
-// mapa zdrobnień
-const nicknames = {
-    "bartek": "Bartosz",
-    "jarek": "Jarosław",
-    "kuba": "Jakub",
-    "ola": "Aleksandra",
-    "ania": "Anna"
-};
-
-// tworzenie sali
 for (let row = 1; row <= 20; row++) {
     const rowDiv = document.createElement("div");
     rowDiv.classList.add("row");
@@ -110,17 +80,18 @@ for (let row = 1; row <= 20; row++) {
     if (row === 20) seats = 14;
 
     for (let i = 1; i <= seats; i++) {
-        if (i === 8 || i === 22) {
-            const gap = document.createElement("div");
-            gap.classList.add("gap");
-            rowDiv.appendChild(gap);
-        }
-
         const seatId = `R${row}M${i}`;
         const btn = document.createElement("button");
         btn.classList.add("seat");
         btn.innerText = i;
         btn.id = seatId;
+
+        // dodanie luk
+        if ((row !== 20) && (i === 8 || i === 22)) {
+            const gap = document.createElement("div");
+            gap.classList.add("gap");
+            rowDiv.appendChild(gap);
+        }
 
         if (occupiedSeats.includes(seatId)) {
             btn.classList.add("occupied");
@@ -140,7 +111,6 @@ for (let row = 1; row <= 20; row++) {
     }
 }
 
-// kliknięcie miejsca
 function handleSeatClick(btn, seatId) {
     if (btn.classList.contains("occupied")) {
         const name = btn.dataset.name;
@@ -150,46 +120,29 @@ function handleSeatClick(btn, seatId) {
         }
         return;
     }
-
     btn.classList.toggle("selected");
-
-    if (selectedSeats.includes(seatId)) {
-        selectedSeats = selectedSeats.filter(s => s !== seatId);
-    } else {
-        selectedSeats.push(seatId);
-    }
+    if (selectedSeats.includes(seatId)) selectedSeats = selectedSeats.filter(s=>s!==seatId);
+    else selectedSeats.push(seatId);
 }
 
-// rezerwacja miejsc
 function reserveSeats() {
     const name = document.getElementById("name").value.trim();
-    if (!name || selectedSeats.length === 0) {
-        alert("Wpisz dane i wybierz miejsca");
-        return;
-    }
-
-    selectedSeats.forEach(seatId => {
+    if (!name || selectedSeats.length===0) { alert("Wpisz dane i wybierz miejsca"); return; }
+    selectedSeats.forEach(seatId=>{
         const btn = document.getElementById(seatId);
         btn.classList.remove("selected");
         btn.classList.add("occupied");
         btn.dataset.name = name;
     });
-
-    selectedSeats = [];
+    selectedSeats=[];
 }
 
-// wyszukiwarka z uwzględnieniem zdrobnień
 function searchPerson() {
     let search = document.getElementById("search").value.toLowerCase();
-
-    // zamiana zdrobnień na pełne imię
     if (nicknames[search]) search = nicknames[search].toLowerCase();
-
-    document.querySelectorAll(".seat").forEach(btn => {
+    document.querySelectorAll(".seat").forEach(btn=>{
         btn.classList.remove("highlight");
-        if (btn.dataset.name && btn.dataset.name.toLowerCase().includes(search)) {
-            btn.classList.add("highlight");
-        }
+        if (btn.dataset.name && btn.dataset.name.toLowerCase().includes(search)) btn.classList.add("highlight");
     });
 }
 </script>
