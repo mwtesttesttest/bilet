@@ -24,7 +24,6 @@ body {
     gap: 5px;
     flex-wrap: wrap;
 }
-
 input { padding: 5px; min-width: 100px; }
 button { padding: 5px 10px; cursor: pointer; }
 
@@ -56,11 +55,7 @@ button { padding: 5px 10px; cursor: pointer; }
 }
 
 /* rzędy */
-.row {
-    display: flex;
-    justify-content: center;
-    margin: 4px 0;
-}
+.row { display: flex; justify-content: center; margin: 4px 0; }
 
 /* kwadratowe miejsca */
 .seat {
@@ -73,7 +68,6 @@ button { padding: 5px 10px; cursor: pointer; }
     cursor: pointer;
     font-size: min(12px, 1.5vw);
 }
-
 .selected { background-color: orange; }
 .occupied { background-color: gray; cursor: not-allowed; }
 .highlight { outline: 3px solid yellow; }
@@ -81,21 +75,9 @@ button { padding: 5px 10px; cursor: pointer; }
 .gap { width: min(15px, 2vw); }
 .big-gap { height: min(25px, 3vw); }
 
-/* info */
-#selectedCount {
-    margin-top: 10px;
-    text-align: center;
-    font-weight: bold;
-}
+#selectedCount { margin-top: 10px; text-align: center; font-weight: bold; }
+#reserveBtn { display: block; margin: 20px auto; padding: 12px 25px; font-size: 16px; }
 
-#reserveBtn {
-    display: block;
-    margin: 20px auto;
-    padding: 12px 25px;
-    font-size: 16px;
-}
-
-/* modal */
 #modal {
     display: none;
     position: fixed;
@@ -104,7 +86,6 @@ button { padding: 5px 10px; cursor: pointer; }
     justify-content: center;
     align-items: center;
 }
-
 #modalContent {
     background: white;
     padding: 20px;
@@ -117,7 +98,6 @@ button { padding: 5px 10px; cursor: pointer; }
 }
 </style>
 </head>
-
 <body>
 
 <div class="top-bar">
@@ -146,7 +126,7 @@ button { padding: 5px 10px; cursor: pointer; }
 </div>
 
 <script>
-// 🔹 Firebase konfiguracja
+// 🔹 Firebase konfiguracja (wstaw własne dane z projektu Firebase)
 const firebaseConfig = {
   apiKey: "TWOJE_API_KEY",
   authDomain: "TWOJ_PROJEKT.firebaseapp.com",
@@ -164,13 +144,7 @@ const hall = document.getElementById("hall");
 const selectedCountDiv = document.getElementById("selectedCount");
 let selectedSeats = [];
 let dragSelecting = false;
-
-// mouse events
 document.addEventListener("mouseup", () => dragSelecting = false);
-
-function updateSelectedCount(){
-    selectedCountDiv.innerText = `Wybrane miejsca: ${selectedSeats.length}`;
-}
 
 // 🔹 generowanie sali
 for (let row=1; row<=20; row++){
@@ -206,7 +180,6 @@ for (let row=1; row<=20; row++){
     }
 
     hall.appendChild(rowDiv);
-
     if(row===10){
         const gapRow = document.createElement("div");
         gapRow.classList.add("big-gap");
@@ -216,16 +189,13 @@ for (let row=1; row<=20; row++){
 
 function handleSeatClick(btn, seatId, isDrag=false){
     if(btn.classList.contains("occupied")) return;
-
     btn.classList.toggle("selected");
-
     if(selectedSeats.includes(seatId)){
         selectedSeats = selectedSeats.filter(s=>s!==seatId);
     } else {
         selectedSeats.push(seatId);
     }
-
-    updateSelectedCount();
+    selectedCountDiv.innerText = `Wybrane miejsca: ${selectedSeats.length}`;
 }
 
 // 🔹 modal
@@ -248,16 +218,15 @@ document.getElementById("saveModal").onclick = () => {
         btn.classList.remove("selected");
         btn.classList.add("occupied");
         btn.dataset.name = name;
-
         db.ref('seats/' + id).set({name: name, occupied: true});
     });
 
     selectedSeats = [];
-    updateSelectedCount();
+    selectedCountDiv.innerText = "Wybrane miejsca: 0";
     modal.style.display="none";
 };
 
-// 🔹 odczyt wszystkich zajętych miejsc z Firebase
+// 🔹 pobieranie wszystkich zajętych miejsc w czasie rzeczywistym
 db.ref('seats').on('value', snapshot => {
     const data = snapshot.val() || {};
     Object.keys(data).forEach(id => {
@@ -280,6 +249,5 @@ function searchPerson(){
     });
 }
 </script>
-
 </body>
 </html>
