@@ -23,16 +23,13 @@ body { font-family: Arial; margin:0; padding:0; }
 input { padding: 5px; min-width: 100px; }
 button { padding: 5px 10px; cursor: pointer; }
 
-/* scena przyklejona */
+/* scena - zwykły element przewijany */
 .stage {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
+    position: relative;       /* przewija się razem z resztą strony */
     width: min(800px, 95vw);
     height: 40px;
     background-color: #d2a679;
+    margin: 10px auto;        /* wycentrowanie i odstęp od góry */
 }
 
 /* scroll poziomy dla sali */
@@ -41,7 +38,7 @@ button { padding: 5px 10px; cursor: pointer; }
     overflow-x: auto;
     display: flex;
     justify-content: center;
-    margin-top: 60px; /* miejsce pod scenę */
+    margin-top: 10px; /* odstęp pod sceną */
 }
 #hall {
     display: flex;
@@ -160,22 +157,20 @@ const hall = document.getElementById("hall");
 const selectedCountDiv = document.getElementById("selectedCount");
 let selectedSeats = [];
 let dragSelecting = false;
-document.addEventListener("mouseup", () => dragSelecting = false);
+document.addEventListener("mouseup", () => dragSelecting=false);
 
 // Tworzenie sali
-for(let row=1; row<=20; row++){
+for(let row=1;row<=20;row++){
     const rowDiv=document.createElement("div");
     rowDiv.classList.add("row");
-    let seats = row===1?26:(row===20?14:28);
+    let seats=row===1?26:(row===20?14:28);
     for(let i=1;i<=seats;i++){
         if(row!==20){
             if((row===1&&(i===7||i===21))||(row!==1&&(i===8||i===22))){
-                const gap=document.createElement("div");
-                gap.classList.add("gap");
-                rowDiv.appendChild(gap);
+                const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);
             }
         }
-        const seatId = `R${row}M${i}`;
+        const seatId=`R${row}M${i}`;
         const btn=document.createElement("button");
         btn.classList.add("seat");
         btn.id=seatId;
@@ -188,12 +183,12 @@ for(let row=1; row<=20; row++){
     if(row===10){const gapRow=document.createElement("div"); gapRow.classList.add("big-gap"); hall.appendChild(gapRow);}
 }
 
-function handleSeatClick(btn, seatId, isDrag=false){
+function handleSeatClick(btn,seatId,isDrag=false){
     if(btn.classList.contains("occupied")) return;
     btn.classList.toggle("selected");
     if(selectedSeats.includes(seatId)) selectedSeats=selectedSeats.filter(s=>s!==seatId);
     else selectedSeats.push(seatId);
-    selectedCountDiv.innerText = `Wybrane miejsca: ${selectedSeats.length}`;
+    selectedCountDiv.innerText=`Wybrane miejsca: ${selectedSeats.length}`;
 }
 
 // Modal rezerwacji
@@ -209,15 +204,12 @@ document.getElementById("saveModal").onclick=()=>{
     if(!name) return alert("Podaj imię");
     selectedSeats.forEach(id=>{
         const btn=document.getElementById(id);
-        btn.classList.remove("selected");
-        btn.classList.add("occupied");
+        btn.classList.remove("selected"); btn.classList.add("occupied");
         btn.dataset.name=name;
         db.ref('seats/'+id).set({name:name,occupied:true});
     });
-    selectedSeats=[];
-    selectedCountDiv.innerText="Wybrane miejsca: 0";
-    modal.style.display="none";
-    modalName.value="";
+    selectedSeats=[]; selectedCountDiv.innerText="Wybrane miejsca: 0";
+    modal.style.display="none"; modalName.value="";
 };
 
 // Pobieranie rezerwacji z Firebase
@@ -245,7 +237,7 @@ const adminSeatInfo=document.getElementById("adminSeatInfo");
 const adminPassword=document.getElementById("adminPassword");
 const adminCancel=document.getElementById("adminCancel");
 const adminConfirm=document.getElementById("adminConfirm");
-const ADMIN_PASSWORD="tajnehaslo"; // zmień na swoje
+const ADMIN_PASSWORD="tajnehaslo";
 
 hall.addEventListener("click",e=>{
     const btn=e.target;
@@ -256,8 +248,7 @@ hall.addEventListener("click",e=>{
     }
 });
 adminCancel.onclick=()=>{
-    adminModal.style.display="none";
-    adminPassword.value="";
+    adminModal.style.display="none"; adminPassword.value="";
 };
 adminConfirm.onclick=()=>{
     const seatId=adminConfirm.dataset.seatId;
@@ -266,14 +257,13 @@ adminConfirm.onclick=()=>{
     const btn=document.getElementById(seatId);
     btn.classList.remove("occupied");
     delete btn.dataset.name;
-    adminModal.style.display="none";
-    adminPassword.value="";
+    adminModal.style.display="none"; adminPassword.value="";
 };
 
 // Scroll poziomy do środka
-window.addEventListener("load", () => {
-    const container = document.getElementById("hall-container");
-    container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
+window.addEventListener("load",()=>{
+    const container=document.getElementById("hall-container");
+    container.scrollLeft=(container.scrollWidth-container.clientWidth)/2;
 });
 </script>
 </body>
