@@ -78,10 +78,10 @@ button { padding: 5px 10px; cursor: pointer; }
 #selectedCount, #freeCount, #occupiedCount {
     margin-top: 10px; text-align: center; font-weight: bold;
 }
-#reserveBtn { display: block; margin: 20px auto; padding: 12px 25px; font-size: 16px; }
+#reserveBtn, #adminPanelBtn { display: block; margin: 10px auto; padding: 12px 25px; font-size: 16px; }
 
 /* modal */
-#modal, #adminModal {
+#modal, #adminModal, #adminPanelModal {
     display: none;
     position: fixed;
     inset: 0;
@@ -102,6 +102,9 @@ button { padding: 5px 10px; cursor: pointer; }
 }
 .modalContent input { padding: 10px; font-size: 16px; width: 100%; }
 .modalContent button { padding: 10px; font-size: 16px; cursor: pointer; }
+#adminPanelList { max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; }
+.adminPanelItem { display: flex; justify-content: space-between; margin: 5px 0; }
+.adminPanelItem button { padding: 2px 6px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -121,6 +124,7 @@ button { padding: 5px 10px; cursor: pointer; }
 <div id="freeCount">Wolne miejsca: 0</div>
 <div id="occupiedCount">Zajęte miejsca: 0</div>
 <button id="reserveBtn">ZAREZERWUJ</button>
+<button id="adminPanelBtn">PANEL ADMINA</button>
 
 <!-- Modal rezerwacji -->
 <div id="modal">
@@ -134,7 +138,7 @@ button { padding: 5px 10px; cursor: pointer; }
     </div>
 </div>
 
-<!-- Modal admina -->
+<!-- Modal admina dla pojedynczego miejsca -->
 <div id="adminModal">
     <div class="modalContent">
         <h3 id="adminSeatInfo"></h3>
@@ -142,6 +146,18 @@ button { padding: 5px 10px; cursor: pointer; }
         <div style="display:flex;justify-content:space-between;">
             <button id="adminCancel">ANULUJ</button>
             <button id="adminConfirm">USUŃ REZERWACJĘ</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Panelu Admina -->
+<div id="adminPanelModal">
+    <div class="modalContent">
+        <h3>Panel Admina - Lista rezerwacji</h3>
+        <input type="password" id="adminPanelPassword" placeholder="Wpisz hasło admina">
+        <div id="adminPanelList"></div>
+        <div style="display:flex;justify-content:space-between;">
+            <button id="closeAdminPanel">ZAMKNIJ</button>
         </div>
     </div>
 </div>
@@ -170,7 +186,7 @@ let dragSelecting=false;
 let allSeats=[];
 document.addEventListener("mouseup",()=>dragSelecting=false);
 
-// Tworzenie sali z big-gap
+// Tworzenie sali
 for(let row=1;row<=20;row++){
     const rowDiv=document.createElement("div"); rowDiv.classList.add("row");
     let seats=row===1?26:(row===20?14:28);
@@ -181,12 +197,20 @@ for(let row=1;row<=20;row++){
         allSeats.push(id);
         const btn=document.createElement("button");
         btn.classList.add("seat"); btn.id=id; btn.innerText=i;
-        btn.addEventListener("mousedown",()=>{dragSelecting=true;handleSeatClick(btn,id);});
-        btn.addEventListener("mouseenter",()=>{if(dragSelecting)handleSeatClick(btn,id,true);});
+        btn.addEventListener("mousedown",()=>{dragSelecting=true;toggleSeat(btn,id);});
+        btn.addEventListener("mouseenter",()=>{if(dragSelecting) toggleSeat(btn,id);});
         rowDiv.appendChild(btn);
     }
     hall.appendChild(rowDiv);
     if(row===10){ const gapRow=document.createElement("div"); gapRow.classList.add("big-gap"); hall.appendChild(gapRow);}
+}
+
+function toggleSeat(btn,id){
+    if(btn.classList.contains("occupied")) return;
+    btn.classList.toggle("selected");
+    if(selectedSeats.includes(id)) selectedSeats=selectedSeats.filter(s=>s!==id);
+    else selectedSeats.push(id);
+    selectedCountDiv.innerText=`Wybrane miejsca: ${selectedSeats.length}`;
 }
 
 function updateCounts(){
@@ -199,15 +223,7 @@ function updateCounts(){
     occupiedCountDiv.innerText=`Zajęte miejsca: ${occupied}`;
 }
 
-function handleSeatClick(btn,id,isDrag=false){
-    if(btn.classList.contains("occupied")) return;
-    btn.classList.toggle("selected");
-    if(selectedSeats.includes(id)) selectedSeats=selectedSeats.filter(s=>s!==id);
-    else selectedSeats.push(id);
-    selectedCountDiv.innerText=`Wybrane miejsca: ${selectedSeats.length}`;
-}
-
-// Rezerwacja modal
+// Modal rezerwacji
 const modal=document.getElementById("modal");
 const modalName=document.getElementById("modalName");
 document.getElementById("reserveBtn").onclick=()=>{
@@ -223,7 +239,6 @@ document.getElementById("saveModal").onclick=()=>{
         btn.classList.remove("selected"); btn.classList.add("occupied");
         btn.dataset.name=name;
         db.ref('seats/'+id).set({name:name,occupied:true});
-        generatePDF(id,name);
     });
     selectedSeats=[]; selectedCountDiv.innerText="Wybrane miejsca: 0";
     modal.style.display="none"; modalName.value="";
@@ -249,7 +264,7 @@ function searchPerson(){
     });
 }
 
-// Admin modal
+// Admin modal pojedynczego miejsca
 const adminModal=document.getElementById("adminModal");
 const adminSeatInfo=document.getElementById("adminSeatInfo");
 const adminPassword=document.getElementById("adminPassword");
@@ -271,28 +286,54 @@ adminConfirm.onclick=()=>{
     if(adminPassword.value!==ADMIN_PASSWORD){ alert("Niepoprawne hasło!"); return; }
     db.ref('seats/'+seatId).remove();
     const btn=document.getElementById(seatId);
-    btn.classList.remove("occupied");
-    delete btn.dataset.name;
+    btn.classList.remove("occupied"); delete btn.dataset.name;
     adminModal.style.display="none"; adminPassword.value="";
     updateCounts();
 };
+
+// Panel Admina
+const adminPanelBtn=document.getElementById("adminPanelBtn");
+const adminPanelModal=document.getElementById("adminPanelModal");
+const adminPanelPassword=document.getElementById("adminPanelPassword");
+const adminPanelList=document.getElementById("adminPanelList");
+const closeAdminPanel=document.getElementById("closeAdminPanel");
+
+adminPanelBtn.onclick=()=>{
+    adminPanelList.innerHTML="";
+    adminPanelModal.style.display="flex";
+};
+closeAdminPanel.onclick=()=>{adminPanelModal.style.display="none"; adminPanelPassword.value="";};
+
+function loadAdminPanel(){
+    if(adminPanelPassword.value!==ADMIN_PASSWORD){ alert("Niepoprawne hasło!"); return; }
+    adminPanelList.innerHTML="";
+    db.ref('seats').once('value').then(snapshot=>{
+        const data=snapshot.val()||{};
+        Object.keys(data).forEach(id=>{
+            const seat=data[id];
+            const div=document.createElement("div");
+            div.classList.add("adminPanelItem");
+            div.innerHTML=`${id}: ${seat.name} <button onclick="deleteAdminSeat('${id}')">USUŃ</button>`;
+            adminPanelList.appendChild(div);
+        });
+    });
+}
+adminPanelPassword.addEventListener("change",loadAdminPanel);
+
+function deleteAdminSeat(id){
+    if(adminPanelPassword.value!==ADMIN_PASSWORD){ alert("Niepoprawne hasło!"); return; }
+    db.ref('seats/'+id).remove();
+    const btn=document.getElementById(id);
+    btn.classList.remove("occupied"); delete btn.dataset.name;
+    loadAdminPanel();
+    updateCounts();
+}
 
 // Scroll poziomy do środka
 window.addEventListener("load",()=>{
     const container=document.getElementById("hall-container");
     container.scrollLeft=(container.scrollWidth-container.clientWidth)/2;
 });
-
-// PDF bilety
-function generatePDF(seatId,name){
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("Bilet na wydarzenie",20,30);
-    doc.text(`Miejsce: ${seatId}`,20,50);
-    doc.text(`Rezerwacja na: ${name}`,20,60);
-    doc.save(`bilet_${seatId}.pdf`);
-}
 </script>
 </body>
 </html>
