@@ -24,7 +24,18 @@ body {
 input { padding: 5px; min-width: 100px; }
 button { padding: 5px 10px; cursor: pointer; }
 
-/* 🔥 KLUCZ: scroll w obie strony */
+/* 🔥 SCENA ZAWSZE NA GÓRZE */
+.stage {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    width: min(800px, 95vw);
+    height: 40px;
+    background-color: #d2a679;
+    margin: 10px auto;
+}
+
+/* scroll poziomy */
 #hall-container {
     width: 100%;
     overflow-x: auto;
@@ -32,7 +43,7 @@ button { padding: 5px 10px; cursor: pointer; }
     justify-content: center;
 }
 
-/* 🔥 KLUCZ: brak ucinania */
+/* brak ucinania */
 #hall {
     display: flex;
     flex-direction: column;
@@ -45,35 +56,26 @@ button { padding: 5px 10px; cursor: pointer; }
     display: flex;
     justify-content: center;
     margin: 4px 0;
-    flex-wrap: nowrap;
 }
 
-/* miejsca */
+/* 🔥 IDEALNE KWADRATY */
 .seat {
-    width: min(35px, 3.2vw);
-    height: min(35px, 3.2vw);
-    margin: min(3px, 0.4vw);
+    width: min(36px, 4vw);
+    aspect-ratio: 1 / 1; /* 🔥 robi z tego kwadrat */
+    margin: min(3px, 0.5vw);
     background-color: green;
     color: white;
     border: none;
     cursor: pointer;
-    font-size: min(12px, 1.2vw);
+    font-size: min(12px, 1.5vw);
 }
 
 .selected { background-color: orange; }
 .occupied { background-color: gray; cursor: not-allowed; }
 .highlight { outline: 3px solid yellow; }
 
-.gap { width: min(15px, 1.5vw); }
-.big-gap { height: min(25px, 2vw); }
-
-/* scena */
-.stage {
-    width: min(800px, 90vw);
-    height: 30px;
-    background-color: #d2a679;
-    margin: 15px auto;
-}
+.gap { width: min(15px, 2vw); }
+.big-gap { height: min(25px, 3vw); }
 
 /* info */
 #selectedCount {
