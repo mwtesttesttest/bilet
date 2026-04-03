@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sala rezerwacji PRO</title>
+
 <style>
 body {
     font-family: Arial;
@@ -29,14 +30,16 @@ button { padding: 5px 10px; cursor: pointer; }
     width: 100%;
     display: flex;
     justify-content: center;
+    padding: 0 5px;
+    box-sizing: border-box;
 }
 
 #hall {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 5px; /* margines boczny */
-    max-width: 100%; /* dopasowanie do ekranu */
+    margin: 0 5px;
+    max-width: 100%;
     transform-origin: top center;
 }
 
@@ -109,18 +112,9 @@ button { padding: 5px 10px; cursor: pointer; }
 #modalContent input { width: 100%; padding: 10px; font-size: 16px; }
 #modalContent button { padding: 10px; font-size: 16px; cursor: pointer; }
 
-/* Skalowanie całej sali w zależności od szerokości ekranu */
-@media(max-width: 1024px){
-    #hall { transform: scale(0.8); }
-}
-@media(max-width: 768px){
-    #hall { transform: scale(0.65); }
-}
-@media(max-width: 480px){
-    #hall { transform: scale(0.5); }
-}
 </style>
 </head>
+
 <body>
 
 <div class="top-bar">
@@ -129,6 +123,7 @@ button { padding: 5px 10px; cursor: pointer; }
 </div>
 
 <div class="stage"></div>
+
 <div id="hall-container">
     <div id="hall"></div>
 </div>
@@ -176,9 +171,17 @@ for (let row=1; row<=20; row++){
     for(let i=1; i<=seats; i++){
         if(row!==20){
             if(row===1){
-                if(i===7 || i===21){ const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);}
+                if(i===7 || i===21){
+                    const gap=document.createElement("div");
+                    gap.classList.add("gap");
+                    rowDiv.appendChild(gap);
+                }
             } else {
-                if(i===8 || i===22){ const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);}
+                if(i===8 || i===22){
+                    const gap=document.createElement("div");
+                    gap.classList.add("gap");
+                    rowDiv.appendChild(gap);
+                }
             }
         }
 
@@ -193,8 +196,14 @@ for (let row=1; row<=20; row++){
             btn.dataset.name="Jan Kowalski";
         }
 
-        btn.addEventListener("mousedown", () => { dragSelecting=true; handleSeatClick(btn, seatId); });
-        btn.addEventListener("mouseenter", () => { if(dragSelecting) handleSeatClick(btn, seatId, true); });
+        btn.addEventListener("mousedown", () => {
+            dragSelecting=true;
+            handleSeatClick(btn, seatId);
+        });
+
+        btn.addEventListener("mouseenter", () => {
+            if(dragSelecting) handleSeatClick(btn, seatId, true);
+        });
 
         rowDiv.appendChild(btn);
     }
@@ -217,13 +226,19 @@ function handleSeatClick(btn, seatId, isDrag=false){
         }
         return;
     }
+
     btn.classList.toggle("selected");
-    if(selectedSeats.includes(seatId)) selectedSeats = selectedSeats.filter(s=>s!==seatId);
-    else selectedSeats.push(seatId);
+
+    if(selectedSeats.includes(seatId)){
+        selectedSeats = selectedSeats.filter(s=>s!==seatId);
+    } else {
+        selectedSeats.push(seatId);
+    }
+
     updateSelectedCount();
 }
 
-// Modal logic
+// Modal
 const reserveBtn = document.getElementById("reserveBtn");
 const modal = document.getElementById("modal");
 const modalName = document.getElementById("modalName");
@@ -250,12 +265,14 @@ saveModal.addEventListener("click", () => {
         alert("Wpisz imię i nazwisko.");
         return;
     }
+
     selectedSeats.forEach(seatId=>{
         const btn=document.getElementById(seatId);
         btn.classList.remove("selected");
         btn.classList.add("occupied");
         btn.dataset.name=name;
     });
+
     selectedSeats=[];
     updateSelectedCount();
     modal.style.display="none";
@@ -265,11 +282,36 @@ saveModal.addEventListener("click", () => {
 function searchPerson(){
     let search=document.getElementById("search").value.toLowerCase();
     if(nicknames[search]) search=nicknames[search].toLowerCase();
+
     document.querySelectorAll(".seat").forEach(btn=>{
         btn.classList.remove("highlight");
-        if(btn.dataset.name && btn.dataset.name.toLowerCase().includes(search)) btn.classList.add("highlight");
+        if(btn.dataset.name && btn.dataset.name.toLowerCase().includes(search)){
+            btn.classList.add("highlight");
+        }
     });
 }
+
+// 🔥 KLUCZOWE: dynamiczne skalowanie
+function scaleHall() {
+    const hall = document.getElementById("hall");
+    const container = document.getElementById("hall-container");
+
+    hall.style.transform = "scale(1)";
+
+    const hallWidth = hall.offsetWidth;
+    const screenWidth = container.offsetWidth;
+
+    let scale = screenWidth / hallWidth;
+
+    if (scale > 1) scale = 1;
+
+    hall.style.transform = `scale(${scale})`;
+}
+
+window.addEventListener("load", scaleHall);
+window.addEventListener("resize", scaleHall);
+
 </script>
+
 </body>
 </html>
