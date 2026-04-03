@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sala rezerwacji PRO</title>
+<title>Sala rezerwacji PRO - PDF Bilet</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -231,15 +231,36 @@ document.getElementById("reserveBtn").onclick=()=>{
     modal.style.display="flex";
 };
 document.getElementById("cancelModal").onclick=()=>{modal.style.display="none"; modalName.value="";};
+
 document.getElementById("saveModal").onclick=()=>{
     const name=modalName.value.trim();
     if(!name) return alert("Podaj imię");
+
+    // generowanie PDF
     selectedSeats.forEach(id=>{
         const btn=document.getElementById(id);
         btn.classList.remove("selected"); btn.classList.add("occupied");
         btn.dataset.name=name;
         db.ref('seats/'+id).set({name:name,occupied:true});
+
+        // Generowanie ładnego biletu PDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({unit:'mm', format:[90,140]});
+        doc.setFillColor(60,117,61);
+        doc.rect(0,0,90,20,'F');
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(14);
+        doc.text("BILET KONCERTOWY",45,12,{align:'center'});
+        doc.setTextColor(0,0,0);
+        doc.setFontSize(12);
+        doc.text(`Imię i nazwisko: ${name}`,10,35);
+        doc.text(`Rząd: ${id.match(/R(\d+)M/)[1]}`,10,50);
+        doc.text(`Miejsce: ${id.match(/M(\d+)/)[1]}`,10,65);
+        doc.setDrawColor(60,117,61);
+        doc.rect(5,25,80,50);
+        doc.save(`Bilet_${id}.pdf`);
     });
+
     selectedSeats=[]; selectedCountDiv.innerText="Wybrane miejsca: 0";
     modal.style.display="none"; modalName.value="";
     updateCounts();
