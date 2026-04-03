@@ -10,11 +10,9 @@ body {
     font-family: Arial;
     margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
+/* top */
 .top-bar {
     margin: 20px 0;
     display: flex;
@@ -26,20 +24,23 @@ body {
 input { padding: 5px; min-width: 100px; }
 button { padding: 5px 10px; cursor: pointer; }
 
-/* 🔥 kontener idealnie centrujący */
+/* 🔥 KLUCZ: scroll w obie strony */
 #hall-container {
     width: 100%;
+    overflow-x: auto;
     display: flex;
     justify-content: center;
 }
 
+/* 🔥 KLUCZ: brak ucinania */
 #hall {
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-width: max-content;
 }
 
-/* 🔥 rzędy zawsze na środku */
+/* rzędy */
 .row {
     display: flex;
     justify-content: center;
@@ -47,7 +48,7 @@ button { padding: 5px 10px; cursor: pointer; }
     flex-wrap: nowrap;
 }
 
-/* 🔥 RESPONSYWNE miejsca */
+/* miejsca */
 .seat {
     width: min(35px, 3.2vw);
     height: min(35px, 3.2vw);
@@ -57,39 +58,42 @@ button { padding: 5px 10px; cursor: pointer; }
     border: none;
     cursor: pointer;
     font-size: min(12px, 1.2vw);
-    transition: 0.2s;
 }
 
 .selected { background-color: orange; }
 .occupied { background-color: gray; cursor: not-allowed; }
 .highlight { outline: 3px solid yellow; }
 
-/* przerwy też responsywne */
 .gap { width: min(15px, 1.5vw); }
 .big-gap { height: min(25px, 2vw); }
 
-/* scena też responsywna */
+/* scena */
 .stage {
     width: min(800px, 90vw);
     height: 30px;
     background-color: #d2a679;
-    margin-bottom: 15px;
+    margin: 15px auto;
 }
 
-#selectedCount { margin-top: 10px; font-weight: bold; }
+/* info */
+#selectedCount {
+    margin-top: 10px;
+    text-align: center;
+    font-weight: bold;
+}
 
 #reserveBtn {
-    margin: 20px 0;
+    display: block;
+    margin: 20px auto;
     padding: 12px 25px;
     font-size: 16px;
 }
 
-/* Modal */
+/* modal */
 #modal {
     display: none;
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    inset: 0;
     background: rgba(0,0,0,0.5);
     justify-content: center;
     align-items: center;
@@ -210,7 +214,7 @@ function handleSeatClick(btn, seatId, isDrag=false){
     updateSelectedCount();
 }
 
-// modal (bez zmian)
+// modal
 const modal = document.getElementById("modal");
 const modalName = document.getElementById("modalName");
 
