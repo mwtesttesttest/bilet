@@ -5,14 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sala rezerwacji PRO</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
 <style>
 body { font-family: Arial; margin:0; padding:0; }
 
-/* top bar */
 .top-bar {
     margin: 20px 0;
     display: flex;
@@ -23,22 +21,18 @@ body { font-family: Arial; margin:0; padding:0; }
 input { padding: 5px; min-width: 100px; }
 button { padding: 5px 10px; cursor: pointer; }
 
-/* scena - zwykły element przewijany */
 .stage {
-    position: relative;       /* przewija się razem z resztą strony */
     width: min(800px, 95vw);
     height: 40px;
     background-color: #d2a679;
-    margin: 10px auto;        /* wycentrowanie i odstęp od góry */
+    margin: 10px auto;
 }
 
-/* scroll poziomy dla sali */
 #hall-container {
     width: 100%;
     overflow-x: auto;
     display: flex;
     justify-content: center;
-    margin-top: 10px; /* odstęp pod sceną */
 }
 #hall {
     display: flex;
@@ -48,12 +42,12 @@ button { padding: 5px 10px; cursor: pointer; }
 }
 .row { display: flex; justify-content: center; margin: 4px 0; }
 
-/* fotele */
+/* 🔥 animacja + lepszy efekt */
 .seat {
     width: min(36px,4vw);
     aspect-ratio: 1 / 1.2;
     margin: min(3px,0.5vw);
-    background: linear-gradient(to top, #3c763d 0%, #5cb85c 60%, #4cae4c 100%);
+    background: linear-gradient(to top, #3c763d, #5cb85c);
     border-radius: 8px 8px 4px 4px;
     border-bottom: 4px solid #2e6d2f;
     color: white;
@@ -62,46 +56,60 @@ button { padding: 5px 10px; cursor: pointer; }
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: 0.15s;
 }
-.selected { background: orange; border-bottom-color: #b36e00; }
-.occupied { background: gray; cursor: not-allowed; border-bottom-color: #555; }
+.seat:hover { transform: scale(1.1); }
+.seat:active { transform: scale(0.8); }
+
+.selected { background: orange; }
+.occupied { background: gray; cursor: not-allowed; }
 .highlight { outline: 3px solid yellow; }
 
 .gap { width: min(15px, 2vw); }
 .big-gap { height: min(25px, 3vw); }
 
-#selectedCount { margin-top: 10px; text-align: center; font-weight: bold; }
-#reserveBtn { display: block; margin: 20px auto; padding: 12px 25px; font-size: 16px; }
+#selectedCount { text-align:center; margin-top:10px; }
+#reserveBtn { display:block; margin:20px auto; padding:12px 25px; }
+
+/* listy */
+#lists {
+    display:flex;
+    justify-content:center;
+    gap:40px;
+    margin:20px;
+    flex-wrap:wrap;
+}
+.listBox {
+    border:1px solid #ccc;
+    padding:10px;
+    width:250px;
+    max-height:200px;
+    overflow:auto;
+}
 
 /* modal */
-#modal, #adminModal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
+#modal, #adminModal, #adminPanel {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    justify-content:center;
+    align-items:center;
 }
 .modalContent {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 400px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    width:300px;
 }
-.modalContent input { padding: 10px; font-size: 16px; width: 100%; }
-.modalContent button { padding: 10px; font-size: 16px; cursor: pointer; }
 </style>
 </head>
 <body>
 
 <div class="top-bar">
-    🔍 <input type="text" id="search" placeholder="Szukaj osoby">
+    🔍 <input id="search" placeholder="Szukaj osoby">
     <button onclick="searchPerson()">Szukaj</button>
+    <button onclick="openAdminPanel()">ADMIN</button>
 </div>
 
 <div class="stage"></div>
@@ -113,158 +121,163 @@ button { padding: 5px 10px; cursor: pointer; }
 <div id="selectedCount">Wybrane miejsca: 0</div>
 <button id="reserveBtn">ZAREZERWUJ</button>
 
-<!-- Modal rezerwacji -->
-<div id="modal">
-    <div class="modalContent">
-        <h3>Wpisz imię i nazwisko</h3>
-        <input type="text" id="modalName">
-        <div style="display:flex;justify-content:space-between;">
-            <button id="cancelModal">ANULUJ</button>
-            <button id="saveModal">ZAPISZ</button>
-        </div>
+<!-- LISTY -->
+<div id="lists">
+    <div class="listBox">
+        <b>Wolne miejsca</b>
+        <div id="freeList"></div>
+    </div>
+    <div class="listBox">
+        <b>Zajęte miejsca</b>
+        <div id="occupiedList"></div>
     </div>
 </div>
 
-<!-- Modal admina -->
-<div id="adminModal">
-    <div class="modalContent">
-        <h3 id="adminSeatInfo"></h3>
-        <input type="password" id="adminPassword" placeholder="Wpisz hasło admina">
-        <div style="display:flex;justify-content:space-between;">
-            <button id="adminCancel">ANULUJ</button>
-            <button id="adminConfirm">USUŃ REZERWACJĘ</button>
-        </div>
-    </div>
+<!-- Modal -->
+<div id="modal">
+<div class="modalContent">
+<h3>Imię i nazwisko</h3>
+<input id="modalName">
+<button onclick="saveSeats()">ZAPISZ</button>
+</div>
+</div>
+
+<!-- Admin panel -->
+<div id="adminPanel">
+<div class="modalContent">
+<h3>Panel admina</h3>
+<div id="adminList"></div>
+<button onclick="closeAdmin()">Zamknij</button>
+</div>
 </div>
 
 <script>
 // Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyCgNJ5Ex6z0_aeqvwjDzwjTMQuTvqwdwVA",
+  apiKey: "AIzaSy...",
   authDomain: "salarezerwacji.firebaseapp.com",
   databaseURL: "https://salarezerwacji-default-rtdb.firebaseio.com",
-  projectId: "salarezerwacji",
-  storageBucket: "salarezerwacji.firebasestorage.app",
-  messagingSenderId: "64800282675",
-  appId: "1:64800282675:web:a13faff668f5a9f2be6b46",
-  measurementId: "G-XNGQ5QYXYE"
+  projectId: "salarezerwacji"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// zmienne
 const hall = document.getElementById("hall");
-const selectedCountDiv = document.getElementById("selectedCount");
 let selectedSeats = [];
-let dragSelecting = false;
-document.addEventListener("mouseup", () => dragSelecting=false);
+let allSeats = [];
 
-// Tworzenie sali
+// tworzenie sali
 for(let row=1;row<=20;row++){
     const rowDiv=document.createElement("div");
     rowDiv.classList.add("row");
+
     let seats=row===1?26:(row===20?14:28);
+
     for(let i=1;i<=seats;i++){
-        if(row!==20){
-            if((row===1&&(i===7||i===21))||(row!==1&&(i===8||i===22))){
-                const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);
-            }
+        if(row!==20 && (i===8||i===22)){
+            const gap=document.createElement("div");
+            gap.classList.add("gap");
+            rowDiv.appendChild(gap);
         }
-        const seatId=`R${row}M${i}`;
+
+        const id=`R${row}M${i}`;
+        allSeats.push(id);
+
         const btn=document.createElement("button");
         btn.classList.add("seat");
-        btn.id=seatId;
         btn.innerText=i;
-        btn.addEventListener("mousedown",()=>{dragSelecting=true;handleSeatClick(btn,seatId);});
-        btn.addEventListener("mouseenter",()=>{if(dragSelecting) handleSeatClick(btn,seatId,true);});
+        btn.id=id;
+
+        btn.onclick=()=>{
+            if(btn.classList.contains("occupied")) return;
+
+            btn.classList.toggle("selected");
+
+            selectedSeats.includes(id)
+                ? selectedSeats=selectedSeats.filter(s=>s!==id)
+                : selectedSeats.push(id);
+
+            document.getElementById("selectedCount").innerText =
+                "Wybrane miejsca: " + selectedSeats.length;
+        };
+
         rowDiv.appendChild(btn);
     }
+
     hall.appendChild(rowDiv);
-    if(row===10){const gapRow=document.createElement("div"); gapRow.classList.add("big-gap"); hall.appendChild(gapRow);}
 }
 
-function handleSeatClick(btn,seatId,isDrag=false){
-    if(btn.classList.contains("occupied")) return;
-    btn.classList.toggle("selected");
-    if(selectedSeats.includes(seatId)) selectedSeats=selectedSeats.filter(s=>s!==seatId);
-    else selectedSeats.push(seatId);
-    selectedCountDiv.innerText=`Wybrane miejsca: ${selectedSeats.length}`;
-}
-
-// Modal rezerwacji
-const modal=document.getElementById("modal");
-const modalName=document.getElementById("modalName");
-document.getElementById("reserveBtn").onclick=()=>{
-    if(!selectedSeats.length) return alert("Wybierz miejsce");
-    modal.style.display="flex";
-};
-document.getElementById("cancelModal").onclick=()=>{modal.style.display="none"; modalName.value="";};
-document.getElementById("saveModal").onclick=()=>{
-    const name=modalName.value.trim();
-    if(!name) return alert("Podaj imię");
+// modal
+function saveSeats(){
+    const name=document.getElementById("modalName").value;
     selectedSeats.forEach(id=>{
-        const btn=document.getElementById(id);
-        btn.classList.remove("selected"); btn.classList.add("occupied");
-        btn.dataset.name=name;
-        db.ref('seats/'+id).set({name:name,occupied:true});
+        db.ref("seats/"+id).set({name});
     });
-    selectedSeats=[]; selectedCountDiv.innerText="Wybrane miejsca: 0";
-    modal.style.display="none"; modalName.value="";
-};
-
-// Pobieranie rezerwacji z Firebase
-db.ref('seats').on('value', snapshot=>{
-    const data=snapshot.val()||{};
-    Object.keys(data).forEach(id=>{
-        const btn=document.getElementById(id);
-        if(btn){ btn.classList.add('occupied'); btn.dataset.name=data[id].name; }
-    });
-});
-
-// Wyszukiwarka
-function searchPerson(){
-    const search=document.getElementById("search").value.toLowerCase();
-    document.querySelectorAll(".seat").forEach(btn=>{
-        btn.classList.remove("highlight");
-        if(btn.dataset.name && btn.dataset.name.toLowerCase().includes(search))
-            btn.classList.add("highlight");
-    });
+    location.reload();
 }
 
-// Admin modal
-const adminModal=document.getElementById("adminModal");
-const adminSeatInfo=document.getElementById("adminSeatInfo");
-const adminPassword=document.getElementById("adminPassword");
-const adminCancel=document.getElementById("adminCancel");
-const adminConfirm=document.getElementById("adminConfirm");
-const ADMIN_PASSWORD="tajnehaslo";
-
-hall.addEventListener("click",e=>{
-    const btn=e.target;
-    if(btn.classList.contains("occupied")){
-        adminSeatInfo.innerText=`Zajęte przez: ${btn.dataset.name}\nMiejsce: ${btn.id}`;
-        adminModal.style.display="flex";
-        adminConfirm.dataset.seatId=btn.id;
-    }
-});
-adminCancel.onclick=()=>{
-    adminModal.style.display="none"; adminPassword.value="";
-};
-adminConfirm.onclick=()=>{
-    const seatId=adminConfirm.dataset.seatId;
-    if(adminPassword.value!==ADMIN_PASSWORD){ alert("Niepoprawne hasło!"); return; }
-    db.ref('seats/'+seatId).remove();
-    const btn=document.getElementById(seatId);
-    btn.classList.remove("occupied");
-    delete btn.dataset.name;
-    adminModal.style.display="none"; adminPassword.value="";
+document.getElementById("reserveBtn").onclick=()=>{
+    if(!selectedSeats.length) return alert("Wybierz miejsca");
+    document.getElementById("modal").style.display="flex";
 };
 
-// Scroll poziomy do środka
-window.addEventListener("load",()=>{
-    const container=document.getElementById("hall-container");
-    container.scrollLeft=(container.scrollWidth-container.clientWidth)/2;
+// firebase
+db.ref("seats").on("value",snap=>{
+    const data=snap.val()||{};
+
+    let occupied = Object.keys(data);
+    let free = allSeats.filter(s=>!occupied.includes(s));
+
+    // listy
+    document.getElementById("freeList").innerHTML = free.join("<br>");
+    document.getElementById("occupiedList").innerHTML =
+        occupied.map(id=>id+" ("+data[id].name+")").join("<br>");
+
+    // oznaczenia
+    document.querySelectorAll(".seat").forEach(b=>{
+        b.classList.remove("occupied");
+    });
+
+    occupied.forEach(id=>{
+        const btn=document.getElementById(id);
+        if(btn){
+            btn.classList.add("occupied");
+            btn.dataset.name=data[id].name;
+        }
+    });
+
+    // admin lista
+    const admin=document.getElementById("adminList");
+    admin.innerHTML="";
+    occupied.forEach(id=>{
+        const div=document.createElement("div");
+        div.innerHTML = `${id} - ${data[id].name}
+        <button onclick="deleteSeat('${id}')">❌</button>`;
+        admin.appendChild(div);
+    });
 });
+
+// admin
+function openAdminPanel(){
+    document.getElementById("adminPanel").style.display="flex";
+}
+function closeAdmin(){
+    document.getElementById("adminPanel").style.display="none";
+}
+function deleteSeat(id){
+    db.ref("seats/"+id).remove();
+}
+
+// search
+function searchPerson(){
+    const s=document.getElementById("search").value.toLowerCase();
+    document.querySelectorAll(".seat").forEach(b=>{
+        b.classList.remove("highlight");
+        if(b.dataset.name && b.dataset.name.toLowerCase().includes(s))
+            b.classList.add("highlight");
+    });
+}
 </script>
+
 </body>
 </html>
