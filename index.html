@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sala rezerwacji PRO</title>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
 <style>
 body {
     font-family: Arial;
@@ -24,7 +28,7 @@ body {
 input { padding: 5px; min-width: 100px; }
 button { padding: 5px 10px; cursor: pointer; }
 
-/* 🔥 SCENA ZAWSZE NA GÓRZE */
+/* scena zawsze na górze */
 .stage {
     position: sticky;
     top: 0;
@@ -58,10 +62,10 @@ button { padding: 5px 10px; cursor: pointer; }
     margin: 4px 0;
 }
 
-/* 🔥 IDEALNE KWADRATY */
+/* kwadratowe miejsca */
 .seat {
     width: min(36px, 4vw);
-    aspect-ratio: 1 / 1; /* 🔥 robi z tego kwadrat */
+    aspect-ratio: 1 / 1;
     margin: min(3px, 0.5vw);
     background-color: green;
     color: white;
@@ -142,19 +146,33 @@ button { padding: 5px 10px; cursor: pointer; }
 </div>
 
 <script>
+// 🔹 Firebase konfiguracja
+const firebaseConfig = {
+  apiKey: "TWOJE_API_KEY",
+  authDomain: "TWOJ_PROJEKT.firebaseapp.com",
+  databaseURL: "https://TWOJ_PROJEKT.firebaseio.com",
+  projectId: "TWOJ_PROJEKT",
+  storageBucket: "TWOJ_PROJEKT.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:abcdefg"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// 🔹 zmienne
 const hall = document.getElementById("hall");
 const selectedCountDiv = document.getElementById("selectedCount");
 let selectedSeats = [];
-let occupiedSeats = ["R1M1","R1M2","R3M5"];
 let dragSelecting = false;
 
+// mouse events
 document.addEventListener("mouseup", () => dragSelecting = false);
 
 function updateSelectedCount(){
     selectedCountDiv.innerText = `Wybrane miejsca: ${selectedSeats.length}`;
 }
 
-// generowanie sali
+// 🔹 generowanie sali
 for (let row=1; row<=20; row++){
     const rowDiv = document.createElement("div");
     rowDiv.classList.add("row");
@@ -176,16 +194,10 @@ for (let row=1; row<=20; row++){
         btn.id=seatId;
         btn.innerText=i;
 
-        if(occupiedSeats.includes(seatId)){
-            btn.classList.add("occupied");
-            btn.dataset.name="Jan Kowalski";
-        }
-
         btn.addEventListener("mousedown", () => {
             dragSelecting=true;
             handleSeatClick(btn, seatId);
         });
-
         btn.addEventListener("mouseenter", () => {
             if(dragSelecting) handleSeatClick(btn, seatId, true);
         });
@@ -216,7 +228,7 @@ function handleSeatClick(btn, seatId, isDrag=false){
     updateSelectedCount();
 }
 
-// modal
+// 🔹 modal
 const modal = document.getElementById("modal");
 const modalName = document.getElementById("modalName");
 
@@ -224,26 +236,40 @@ document.getElementById("reserveBtn").onclick = () => {
     if(!selectedSeats.length) return alert("Wybierz miejsce");
     modal.style.display="flex";
 };
-
 document.getElementById("cancelModal").onclick = () => modal.style.display="none";
 
+// 🔹 zapis rezerwacji do Firebase
 document.getElementById("saveModal").onclick = () => {
     const name = modalName.value.trim();
     if(!name) return alert("Podaj imię");
 
     selectedSeats.forEach(id=>{
-        const btn=document.getElementById(id);
+        const btn = document.getElementById(id);
         btn.classList.remove("selected");
         btn.classList.add("occupied");
-        btn.dataset.name=name;
+        btn.dataset.name = name;
+
+        db.ref('seats/' + id).set({name: name, occupied: true});
     });
 
-    selectedSeats=[];
+    selectedSeats = [];
     updateSelectedCount();
     modal.style.display="none";
 };
 
-// wyszukiwarka
+// 🔹 odczyt wszystkich zajętych miejsc z Firebase
+db.ref('seats').on('value', snapshot => {
+    const data = snapshot.val() || {};
+    Object.keys(data).forEach(id => {
+        const btn = document.getElementById(id);
+        if(btn){
+            btn.classList.add('occupied');
+            btn.dataset.name = data[id].name;
+        }
+    });
+});
+
+// 🔹 wyszukiwarka
 function searchPerson(){
     const search=document.getElementById("search").value.toLowerCase();
     document.querySelectorAll(".seat").forEach(btn=>{
