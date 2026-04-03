@@ -28,18 +28,15 @@ button { padding: 5px 10px; cursor: pointer; }
 
 #hall-container {
     width: 100%;
+    overflow-x: hidden;
     display: flex;
     justify-content: center;
-    overflow-x: hidden; /* 🔥 kluczowe */
-    padding: 0 5px;
-    box-sizing: border-box;
 }
 
 #hall {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin: 0 5px;
     transform-origin: top center;
 }
 
@@ -290,7 +287,7 @@ function searchPerson(){
     });
 }
 
-// 🔥 FINAL FIX – idealne dopasowanie
+// 🔥 FINAL: skalowanie + idealne centrowanie
 function scaleHall() {
     const hall = document.getElementById("hall");
     const container = document.getElementById("hall-container");
@@ -302,13 +299,15 @@ function scaleHall() {
     const screenWidth = container.clientWidth;
 
     let scale = screenWidth / hallWidth;
-
     if (scale > 1) scale = 1;
 
-    hall.style.transform = `scale(${scale})`;
+    const finalWidth = hallWidth * scale;
 
-    // 🔥 najważniejsze — fizyczna szerokość po skalowaniu
-    hall.style.width = (hallWidth * scale) + "px";
+    hall.style.transform = `scale(${scale})`;
+    hall.style.width = finalWidth + "px";
+
+    // 🔥 centrowanie
+    hall.style.marginLeft = ((screenWidth - finalWidth) / 2) + "px";
 }
 
 window.addEventListener("load", scaleHall);
