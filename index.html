@@ -18,6 +18,7 @@ body { font-family: Arial; margin:0; padding:0; }
     gap: 5px;
     flex-wrap: wrap;
 }
+
 input { padding: 5px; min-width: 100px; }
 button { padding: 5px 10px; cursor: pointer; }
 
@@ -34,15 +35,16 @@ button { padding: 5px 10px; cursor: pointer; }
     display: flex;
     justify-content: center;
 }
+
 #hall {
     display: flex;
     flex-direction: column;
     align-items: center;
     min-width: max-content;
 }
+
 .row { display: flex; justify-content: center; margin: 4px 0; }
 
-/* 🔥 animacja + lepszy efekt */
 .seat {
     width: min(36px,4vw);
     aspect-ratio: 1 / 1.2;
@@ -58,6 +60,7 @@ button { padding: 5px 10px; cursor: pointer; }
     align-items: center;
     transition: 0.15s;
 }
+
 .seat:hover { transform: scale(1.1); }
 .seat:active { transform: scale(0.8); }
 
@@ -68,23 +71,16 @@ button { padding: 5px 10px; cursor: pointer; }
 .gap { width: min(15px, 2vw); }
 .big-gap { height: min(25px, 3vw); }
 
-#selectedCount { text-align:center; margin-top:10px; }
-#reserveBtn { display:block; margin:20px auto; padding:12px 25px; }
-
-/* listy */
-#lists {
-    display:flex;
-    justify-content:center;
-    gap:40px;
-    margin:20px;
-    flex-wrap:wrap;
+#selectedCount, #stats {
+    text-align:center;
+    margin-top:10px;
+    font-weight:bold;
 }
-.listBox {
-    border:1px solid #ccc;
-    padding:10px;
-    width:250px;
-    max-height:200px;
-    overflow:auto;
+
+#reserveBtn {
+    display:block;
+    margin:20px auto;
+    padding:12px 25px;
 }
 
 /* modal */
@@ -96,11 +92,13 @@ button { padding: 5px 10px; cursor: pointer; }
     justify-content:center;
     align-items:center;
 }
+
 .modalContent {
     background:white;
     padding:20px;
     border-radius:10px;
-    width:300px;
+    width:90%;
+    max-width:400px;
 }
 </style>
 </head>
@@ -119,36 +117,29 @@ button { padding: 5px 10px; cursor: pointer; }
 </div>
 
 <div id="selectedCount">Wybrane miejsca: 0</div>
+<div id="stats">Wolne: ... | Zajęte: ...</div>
+
 <button id="reserveBtn">ZAREZERWUJ</button>
 
-<!-- LISTY -->
-<div id="lists">
-    <div class="listBox">
-        <b>Wolne miejsca</b>
-        <div id="freeList"></div>
-    </div>
-    <div class="listBox">
-        <b>Zajęte miejsca</b>
-        <div id="occupiedList"></div>
-    </div>
-</div>
-
-<!-- Modal -->
+<!-- POPRAWIONY MODAL -->
 <div id="modal">
-<div class="modalContent">
-<h3>Imię i nazwisko</h3>
-<input id="modalName">
-<button onclick="saveSeats()">ZAPISZ</button>
-</div>
+    <div class="modalContent">
+        <h3>Wpisz imię i nazwisko</h3>
+        <input type="text" id="modalName">
+        <div style="display:flex;justify-content:space-between;">
+            <button id="cancelModal">ANULUJ</button>
+            <button id="saveModal">ZAPISZ</button>
+        </div>
+    </div>
 </div>
 
-<!-- Admin panel -->
+<!-- admin panel -->
 <div id="adminPanel">
-<div class="modalContent">
-<h3>Panel admina</h3>
-<div id="adminList"></div>
-<button onclick="closeAdmin()">Zamknij</button>
-</div>
+    <div class="modalContent">
+        <h3>Panel admina</h3>
+        <div id="adminList"></div>
+        <button onclick="closeAdmin()">Zamknij</button>
+    </div>
 </div>
 
 <script>
@@ -166,7 +157,7 @@ const hall = document.getElementById("hall");
 let selectedSeats = [];
 let allSeats = [];
 
-// tworzenie sali
+// SALA
 for(let row=1;row<=20;row++){
     const rowDiv=document.createElement("div");
     rowDiv.classList.add("row");
@@ -174,10 +165,20 @@ for(let row=1;row<=20;row++){
     let seats=row===1?26:(row===20?14:28);
 
     for(let i=1;i<=seats;i++){
-        if(row!==20 && (i===8||i===22)){
-            const gap=document.createElement("div");
-            gap.classList.add("gap");
-            rowDiv.appendChild(gap);
+
+        // 🔥 poprawiony pierwszy rząd
+        if(row===1){
+            if(i===7 || i===21){
+                const gap=document.createElement("div");
+                gap.classList.add("gap");
+                rowDiv.appendChild(gap);
+            }
+        } else if(row!==20){
+            if(i===8 || i===22){
+                const gap=document.createElement("div");
+                gap.classList.add("gap");
+                rowDiv.appendChild(gap);
+            }
         }
 
         const id=`R${row}M${i}`;
@@ -207,38 +208,45 @@ for(let row=1;row<=20;row++){
     hall.appendChild(rowDiv);
 }
 
-// modal
-function saveSeats(){
-    const name=document.getElementById("modalName").value;
-    selectedSeats.forEach(id=>{
-        db.ref("seats/"+id).set({name});
-    });
-    location.reload();
-}
+// MODAL (Twoja wersja)
+const modal=document.getElementById("modal");
+const modalName=document.getElementById("modalName");
 
 document.getElementById("reserveBtn").onclick=()=>{
     if(!selectedSeats.length) return alert("Wybierz miejsca");
-    document.getElementById("modal").style.display="flex";
+    modal.style.display="flex";
 };
 
-// firebase
+document.getElementById("cancelModal").onclick=()=>{
+    modal.style.display="none";
+};
+
+document.getElementById("saveModal").onclick=()=>{
+    const name=modalName.value.trim();
+    if(!name) return alert("Podaj imię");
+
+    selectedSeats.forEach(id=>{
+        db.ref("seats/"+id).set({name});
+    });
+
+    selectedSeats=[];
+    modal.style.display="none";
+};
+
+// FIREBASE
 db.ref("seats").on("value",snap=>{
     const data=snap.val()||{};
+    const occupied=Object.keys(data).length;
+    const free=allSeats.length-occupied;
 
-    let occupied = Object.keys(data);
-    let free = allSeats.filter(s=>!occupied.includes(s));
+    document.getElementById("stats").innerText =
+        `Wolne: ${free} | Zajęte: ${occupied}`;
 
-    // listy
-    document.getElementById("freeList").innerHTML = free.join("<br>");
-    document.getElementById("occupiedList").innerHTML =
-        occupied.map(id=>id+" ("+data[id].name+")").join("<br>");
-
-    // oznaczenia
     document.querySelectorAll(".seat").forEach(b=>{
         b.classList.remove("occupied");
     });
 
-    occupied.forEach(id=>{
+    Object.keys(data).forEach(id=>{
         const btn=document.getElementById(id);
         if(btn){
             btn.classList.add("occupied");
@@ -249,15 +257,15 @@ db.ref("seats").on("value",snap=>{
     // admin lista
     const admin=document.getElementById("adminList");
     admin.innerHTML="";
-    occupied.forEach(id=>{
+    Object.keys(data).forEach(id=>{
         const div=document.createElement("div");
-        div.innerHTML = `${id} - ${data[id].name}
+        div.innerHTML=`${id} - ${data[id].name}
         <button onclick="deleteSeat('${id}')">❌</button>`;
         admin.appendChild(div);
     });
 });
 
-// admin
+// ADMIN
 function openAdminPanel(){
     document.getElementById("adminPanel").style.display="flex";
 }
@@ -268,7 +276,7 @@ function deleteSeat(id){
     db.ref("seats/"+id).remove();
 }
 
-// search
+// SEARCH
 function searchPerson(){
     const s=document.getElementById("search").value.toLowerCase();
     document.querySelectorAll(".seat").forEach(b=>{
