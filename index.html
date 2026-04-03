@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sala rezerwacji PRO</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 body { font-family: Arial; margin:0; padding:0; }
@@ -84,7 +88,7 @@ button { padding: 5px 10px; cursor: pointer; }
 }
 
 /* modal */
-#modal, #adminModal, #adminPanel {
+#modal, #adminPanel {
     display:none;
     position:fixed;
     inset:0;
@@ -100,6 +104,8 @@ button { padding: 5px 10px; cursor: pointer; }
     width:90%;
     max-width:400px;
 }
+.modalContent input { padding: 10px; font-size: 16px; width: 100%; }
+.modalContent button { padding: 10px; font-size: 16px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -121,7 +127,7 @@ button { padding: 5px 10px; cursor: pointer; }
 
 <button id="reserveBtn">ZAREZERWUJ</button>
 
-<!-- POPRAWIONY MODAL -->
+<!-- Modal rezerwacji -->
 <div id="modal">
     <div class="modalContent">
         <h3>Wpisz imię i nazwisko</h3>
@@ -145,7 +151,7 @@ button { padding: 5px 10px; cursor: pointer; }
 <script>
 // Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
+  apiKey: "AIzaSyCgNJ5Ex6z0_aeqvwjDzwjTMQuTvqwdwVA",
   authDomain: "salarezerwacji.firebaseapp.com",
   databaseURL: "https://salarezerwacji-default-rtdb.firebaseio.com",
   projectId: "salarezerwacji"
@@ -157,28 +163,17 @@ const hall = document.getElementById("hall");
 let selectedSeats = [];
 let allSeats = [];
 
-// SALA
+// Tworzenie sali
 for(let row=1;row<=20;row++){
     const rowDiv=document.createElement("div");
     rowDiv.classList.add("row");
-
     let seats=row===1?26:(row===20?14:28);
 
     for(let i=1;i<=seats;i++){
-
-        // 🔥 poprawiony pierwszy rząd
-        if(row===1){
-            if(i===7 || i===21){
-                const gap=document.createElement("div");
-                gap.classList.add("gap");
-                rowDiv.appendChild(gap);
-            }
-        } else if(row!==20){
-            if(i===8 || i===22){
-                const gap=document.createElement("div");
-                gap.classList.add("gap");
-                rowDiv.appendChild(gap);
-            }
+        if(row===1 && (i===7||i===21)){
+            const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);
+        } else if(row!==1 && row!==20 && (i===8||i===22)){
+            const gap=document.createElement("div"); gap.classList.add("gap"); rowDiv.appendChild(gap);
         }
 
         const id=`R${row}M${i}`;
@@ -186,29 +181,29 @@ for(let row=1;row<=20;row++){
 
         const btn=document.createElement("button");
         btn.classList.add("seat");
-        btn.innerText=i;
         btn.id=id;
+        btn.innerText=i;
 
         btn.onclick=()=>{
             if(btn.classList.contains("occupied")) return;
-
             btn.classList.toggle("selected");
-
             selectedSeats.includes(id)
                 ? selectedSeats=selectedSeats.filter(s=>s!==id)
                 : selectedSeats.push(id);
-
-            document.getElementById("selectedCount").innerText =
-                "Wybrane miejsca: " + selectedSeats.length;
+            document.getElementById("selectedCount").innerText="Wybrane miejsca: "+selectedSeats.length;
         };
 
         rowDiv.appendChild(btn);
     }
 
     hall.appendChild(rowDiv);
+
+    if(row===10){
+        const gapRow=document.createElement("div"); gapRow.classList.add("big-gap"); hall.appendChild(gapRow);
+    }
 }
 
-// MODAL (Twoja wersja)
+// Modal rezerwacji
 const modal=document.getElementById("modal");
 const modalName=document.getElementById("modalName");
 
@@ -219,6 +214,7 @@ document.getElementById("reserveBtn").onclick=()=>{
 
 document.getElementById("cancelModal").onclick=()=>{
     modal.style.display="none";
+    modalName.value="";
 };
 
 document.getElementById("saveModal").onclick=()=>{
@@ -229,18 +225,41 @@ document.getElementById("saveModal").onclick=()=>{
         db.ref("seats/"+id).set({name});
     });
 
+    generatePDF(name, selectedSeats);
+
     selectedSeats=[];
     modal.style.display="none";
+    modalName.value="";
 };
 
-// FIREBASE
+// Generowanie PDF z biletami
+function generatePDF(name, seats){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    let y = 20;
+
+    doc.setFontSize(18);
+    doc.text("BILET WSTĘPU", 70, 10);
+    doc.setFontSize(12);
+
+    seats.forEach(seat=>{
+        doc.text(`Imię: ${name}`, 20, y);
+        doc.text(`Miejsce: ${seat}`, 20, y+8);
+        doc.text("-----------------------------", 20, y+14);
+        y+=25;
+        if(y>260){ doc.addPage(); y=20; }
+    });
+
+    doc.save("bilety.pdf");
+}
+
+// Pobieranie rezerwacji z Firebase i statystyki
 db.ref("seats").on("value",snap=>{
     const data=snap.val()||{};
     const occupied=Object.keys(data).length;
     const free=allSeats.length-occupied;
 
-    document.getElementById("stats").innerText =
-        `Wolne: ${free} | Zajęte: ${occupied}`;
+    document.getElementById("stats").innerText=`Wolne: ${free} | Zajęte: ${occupied}`;
 
     document.querySelectorAll(".seat").forEach(b=>{
         b.classList.remove("occupied");
@@ -254,29 +273,22 @@ db.ref("seats").on("value",snap=>{
         }
     });
 
-    // admin lista
+    // Admin panel
     const admin=document.getElementById("adminList");
     admin.innerHTML="";
     Object.keys(data).forEach(id=>{
         const div=document.createElement("div");
-        div.innerHTML=`${id} - ${data[id].name}
-        <button onclick="deleteSeat('${id}')">❌</button>`;
+        div.innerHTML=`${id} - ${data[id].name} <button onclick="deleteSeat('${id}')">❌</button>`;
         admin.appendChild(div);
     });
 });
 
-// ADMIN
-function openAdminPanel(){
-    document.getElementById("adminPanel").style.display="flex";
-}
-function closeAdmin(){
-    document.getElementById("adminPanel").style.display="none";
-}
-function deleteSeat(id){
-    db.ref("seats/"+id).remove();
-}
+// Admin
+function openAdminPanel(){ document.getElementById("adminPanel").style.display="flex"; }
+function closeAdmin(){ document.getElementById("adminPanel").style.display="none"; }
+function deleteSeat(id){ db.ref("seats/"+id).remove(); }
 
-// SEARCH
+// Wyszukiwarka
 function searchPerson(){
     const s=document.getElementById("search").value.toLowerCase();
     document.querySelectorAll(".seat").forEach(b=>{
@@ -285,6 +297,12 @@ function searchPerson(){
             b.classList.add("highlight");
     });
 }
+
+// Scroll poziomy do środka
+window.addEventListener("load",()=>{
+    const container=document.getElementById("hall-container");
+    container.scrollLeft=(container.scrollWidth-container.clientWidth)/2;
+});
 </script>
 
 </body>
