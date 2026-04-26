@@ -3,36 +3,160 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Sala rezerwacji PRO</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
-<!-- PDF LIB -->
+<!-- jsPDF (zostaje, ale nie używamy już) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- NOWE -->
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
 <style>
 body { font-family: Arial; margin:0; padding:0; background:#f4f4f4; }
-.row { display:flex; justify-content:center; margin:4px 0; }
-.seat {
-    width:30px;height:30px;margin:3px;
-    background:green;color:white;border:none;
-    cursor:pointer;
+
+/* top bar */
+.top-bar {
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    flex-wrap: wrap;
 }
-.selected { background:orange; }
-.occupied { background:gray; cursor:not-allowed; }
+input { padding: 5px; min-width: 100px; }
+button { padding: 5px 10px; cursor: pointer; }
+
+/* scena */
+.stage {
+    position: relative;
+    width: min(800px, 95vw);
+    height: 40px;
+    background-color: #d2a679;
+    margin: 10px auto 20px auto;
+}
+
+/* scroll poziomy */
+#hall-container {
+    width: 100%;
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+}
+#hall {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: max-content;
+}
+.row { display: flex; justify-content: center; margin: 4px 0; }
+
+/* fotele */
+.seat {
+    width: min(36px,4vw);
+    aspect-ratio: 1 / 1.2;
+    margin: min(3px,0.5vw);
+    background: linear-gradient(to top, #3c763d 0%, #5cb85c 60%, #4cae4c 100%);
+    border-radius: 8px 8px 4px 4px;
+    border-bottom: 4px solid #2e6d2f;
+    color: white;
+    font-size: min(12px,1.5vw);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.1s ease;
+}
+.seat:hover { transform: scale(1.1); }
+.selected { background: orange; border-bottom-color: #b36e00; }
+.occupied { background: gray; cursor: not-allowed; border-bottom-color: #555; }
+.highlight { outline: 3px solid yellow; }
+
+.gap { width: min(15px,2vw); }
+.big-gap { height: min(25px,3vw); }
+
+#selectedCount, #freeCount, #occupiedCount {
+    margin-top: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+#reserveBtn { display: block; margin: 20px auto; padding: 12px 25px; font-size: 16px; }
+
+/* modal */
+#modal, #adminModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+}
+.modalContent {
+    background: #f9f9f9;
+    padding: 25px 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 450px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.modalContent h3 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 10px;
+    text-align: center;
+}
+.modalContent input {
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+.modalContent button {
+    padding: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+}
 </style>
 </head>
 <body>
 
-<div id="hall"></div>
+<div class="top-bar">
+    🔍 <input type="text" id="search" placeholder="Szukaj osoby">
+    <button onclick="searchPerson()">Szukaj</button>
+</div>
+
+<div class="stage"></div>
+
+<div id="hall-container">
+    <div id="hall"></div>
+</div>
+
+<div id="selectedCount">Wybrane miejsca: 0</div>
+<div id="seatCounts">
+    <div id="freeCount">Wolne miejsca: 0</div>
+    <div id="occupiedCount">Zajęte miejsca: 0</div>
+</div>
+
 <button id="reserveBtn">ZAREZERWUJ</button>
 
-<div id="modal" style="display:none;">
-    <input type="text" id="modalName" placeholder="Imię i nazwisko">
-    <button id="saveModal">ZAPISZ</button>
+<!-- Modal -->
+<div id="modal">
+    <div class="modalContent">
+        <h3>Wpisz imię i nazwisko</h3>
+        <input type="text" id="modalName">
+        <div style="display:flex;justify-content:space-between;">
+            <button id="cancelModal">ANULUJ</button>
+            <button id="saveModal">ZAPISZ</button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -45,39 +169,41 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// SALA (bez zmian)
 const hall = document.getElementById("hall");
 let selectedSeats = [];
 
-// SALA
-for(let row=1; row<=5; row++){
+for(let row=1; row<=20; row++){
     const rowDiv=document.createElement("div");
     rowDiv.classList.add("row");
 
-    for(let i=1;i<=10;i++){
-        const id=`R${row}M${i}`;
+    let seats=row===1?26:(row===20?14:28);
+
+    for(let i=1;i<=seats;i++){
+        const seatId=`R${row}M${i}`;
         const btn=document.createElement("button");
 
-        btn.className="seat";
+        btn.classList.add("seat");
+        btn.id=seatId;
         btn.innerText=i;
 
         btn.onclick=()=>{
             if(btn.classList.contains("occupied")) return;
             btn.classList.toggle("selected");
 
-            if(selectedSeats.includes(id))
-                selectedSeats=selectedSeats.filter(s=>s!==id);
+            if(selectedSeats.includes(seatId))
+                selectedSeats=selectedSeats.filter(s=>s!==seatId);
             else
-                selectedSeats.push(id);
+                selectedSeats.push(seatId);
         };
 
-        btn.id=id;
         rowDiv.appendChild(btn);
     }
 
     hall.appendChild(rowDiv);
 }
 
-// 🔥 IDEALNIE DOPASOWANY PDF
+// 🔥 NOWA FUNKCJA PDF
 async function generujBiletPDF(name, seatId){
 
     const existingPdfBytes = await fetch("bilet.pdf").then(res => res.arrayBuffer());
@@ -89,31 +215,10 @@ async function generujBiletPDF(name, seatId){
     const row = seatId.match(/R(\d+)/)[1];
     const seat = seatId.match(/M(\d+)/)[1];
 
-    // 📐 ROZMIAR PDF: ~482 x 156
-
-    // ✅ IMIĘ (lewa część biletu)
-    page.drawText(name, {
-        x: 40,
-        y: 60,
-        size: 12,
-        font: font
-    });
-
-    // ✅ RZĄD (białe pole - prawa część)
-    page.drawText(row, {
-        x: 360,
-        y: 70,
-        size: 18,
-        font: font
-    });
-
-    // ✅ MIEJSCE (białe pole - obok)
-    page.drawText(seat, {
-        x: 420,
-        y: 70,
-        size: 18,
-        font: font
-    });
+    // 📍 dopasowane pod pola
+    page.drawText(name, { x: 45, y: 55, size: 12, font });
+    page.drawText(row, { x: 360, y: 72, size: 18, font });
+    page.drawText(seat, { x: 420, y: 72, size: 18, font });
 
     const pdfBytes = await pdfDoc.save();
 
@@ -127,14 +232,19 @@ async function generujBiletPDF(name, seatId){
 // REZERWACJA
 document.getElementById("reserveBtn").onclick=()=>{
     if(!selectedSeats.length) return alert("Wybierz miejsce");
-    document.getElementById("modal").style.display="block";
+    document.getElementById("modal").style.display="flex";
 };
 
-document.getElementById("saveModal").onclick=()=>{
+document.getElementById("cancelModal").onclick=()=>{
+    document.getElementById("modal").style.display="none";
+};
+
+document.getElementById("saveModal").onclick=async ()=>{
+
     const name=document.getElementById("modalName").value.trim();
     if(!name) return alert("Podaj imię");
 
-    selectedSeats.forEach(id=>{
+    for(const id of selectedSeats){
         const btn=document.getElementById(id);
 
         btn.classList.remove("selected");
@@ -142,8 +252,8 @@ document.getElementById("saveModal").onclick=()=>{
 
         db.ref('seats/'+id).set({name:name,occupied:true});
 
-        generujBiletPDF(name, id);
-    });
+        await generujBiletPDF(name, id);
+    }
 
     selectedSeats=[];
     document.getElementById("modal").style.display="none";
