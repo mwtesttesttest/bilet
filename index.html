@@ -289,7 +289,7 @@ async function generujWszystkieBiletyPDF(name, seats){
 
     const font = await finalPdf.embedFont(PDFLib.StandardFonts.Helvetica);
 
-    // 👉 STRONA 1 (z danymi) dla każdego biletu
+     // 👉 STRONA 1 (z danymi) dla każdego biletu
     for(const seatId of seats){
 
         const [pageTemplate] = await finalPdf.copyPages(basePdf, [0]);
@@ -301,29 +301,8 @@ async function generujWszystkieBiletyPDF(name, seats){
         const seat = seatId.match(/M(\d+)/)[1];
 
         page.drawText(name, { x: 120, y: 180, size: 12, font });
-         // zakres dla RZĘDU (dopasuj jeśli trzeba)
-const rowCenterX = (277 + 293) / 2;
-const rowText = row.toString();
-const rowWidth = font.widthOfTextAtSize(rowText, 14);
-
-page.drawText(rowText, {
-    x: rowCenterX - rowWidth / 2,
-    y: 36,
-    size: 14,
-    font
-});
-
-// zakres dla MIEJSCA (dopasuj jeśli trzeba)
-const seatCenterX = (311 + 327) / 2;
-const seatText = seat.toString();
-const seatWidth = font.widthOfTextAtSize(seatText, 14);
-
-page.drawText(seatText, {
-    x: seatCenterX - seatWidth / 2,
-    y: 36,
-    size: 14,
-    font
-});
+        page.drawText(row,  { x: 285, y: 36,  size: 12, font });
+        page.drawText(seat, { x: 319, y: 36,  size: 12, font });
     }
 
     // 👉 STRONA 2 (QR) tylko raz na końcu
