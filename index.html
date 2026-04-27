@@ -432,13 +432,15 @@ adminListClose.onclick = () => {
 };
 
 adminListPassword.oninput = () => {
+
+    adminListContent.innerHTML = "";
+
     if(adminListPassword.value !== ADMIN_PASSWORD){
         return;
     }
 
     db.ref('seats').once('value', snapshot=>{
         const data = snapshot.val() || {};
-        adminListContent.innerHTML = "";
 
         Object.keys(data).forEach(id=>{
             const row = id.match(/R(\d+)/)[1];
