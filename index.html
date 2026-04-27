@@ -430,34 +430,13 @@ adminListClose.onclick = () => {
     adminListPassword.value = "";
     adminListContent.innerHTML = "";
 };
+
 adminListPassword.oninput = () => {
-
-    if(adminListPassword.value.length < ADMIN_PASSWORD.length){
-        return;
-    }
-
     if(adminListPassword.value !== ADMIN_PASSWORD){
+        alert("Złe hasło");
         return;
     }
 
-    db.ref('seats').once('value', snapshot=>{
-        const data = snapshot.val() || {};
-
-        Object.keys(data).forEach(id=>{
-            const row = id.match(/R(\d+)/)[1];
-            const seat = id.match(/M(\d+)/)[1];
-
-            const div = document.createElement("div");
-
-            div.innerHTML = `
-                ${data[id].name} | R${row} M${seat}
-                <button onclick="usunRezerwacje('${id}')">❌</button>
-            `;
-
-            adminListContent.appendChild(div);
-        });
-    });
-};
     db.ref('seats').once('value', snapshot=>{
         const data = snapshot.val() || {};
         adminListContent.innerHTML = "";
