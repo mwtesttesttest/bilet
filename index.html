@@ -11,6 +11,7 @@
 
 <!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
 <style>
 body { font-family: Arial; margin:0; padding:0; background:#f4f4f4; }
@@ -260,8 +261,7 @@ document.getElementById("saveModal").onclick=()=>{
         db.ref('seats/'+id).set({name:name,occupied:true});
 
         // Generowanie PDF biletu
-        
-async function generujBiletPDF(name, seatId){
+    async function generujBiletPDF(name, seatId){
 
     const existingPdfBytes = await fetch("bilet.pdf").then(res => res.arrayBuffer());
     const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
@@ -272,32 +272,9 @@ async function generujBiletPDF(name, seatId){
     const row = seatId.match(/R(\d+)/)[1];
     const seat = seatId.match(/M(\d+)/)[1];
 
-    // 🔴 DOPASUJ TE WSPÓŁRZĘDNE DO BIAŁYCH POL
-    // (to jest kluczowy moment)
-
-    // Imię i nazwisko
-    page.drawText(name, {
-        x: 120,
-        y: 180,
-        size: 12,
-        font: font
-    });
-
-    // RZĄD (białe pole)
-    page.drawText(row, {
-        x: 300,
-        y: 120,
-        size: 14,
-        font: font
-    });
-
-    // MIEJSCE (białe pole)
-    page.drawText(seat, {
-        x: 420,
-        y: 120,
-        size: 14,
-        font: font
-    });
+    page.drawText(name, { x: 120, y: 180, size: 12, font });
+    page.drawText(row, { x: 300, y: 120, size: 14, font });
+    page.drawText(seat, { x: 420, y: 120, size: 14, font });
 
     const pdfBytes = await pdfDoc.save();
 
@@ -307,6 +284,11 @@ async function generujBiletPDF(name, seatId){
     link.download = `Bilet_${seatId}.pdf`;
     link.click();
 }
+
+// 🔥 TO BYŁO BRAKUJĄCE
+generujBiletPDF(name, id);    
+
+  
     });
     selectedSeats=[];
     selectedCountDiv.innerText="Wybrane miejsca: 0";
