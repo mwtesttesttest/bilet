@@ -211,7 +211,17 @@ input:focus {
         </div>
     </div>
 </div>
+<!-- 🔥 NOWY PANEL ADMINA -->
+<div id="adminListModal">
+    <div class="modalContent" style="max-width:600px;">
+        <h3>Panel admina</h3>
+        <input type="password" id="adminListPassword" placeholder="Hasło">
+        <div id="adminListContent" style="max-height:300px; overflow:auto;"></div>
+        <button id="adminListClose">ZAMKNIJ</button>
+    </div>
+</div>
 
+    
 <script>
 // Firebase
 const firebaseConfig = {
@@ -421,7 +431,7 @@ adminListClose.onclick = () => {
     adminListContent.innerHTML = "";
 };
 
-adminListPassword.onchange = () => {
+adminListPassword.oninput = () => {
     if(adminListPassword.value !== ADMIN_PASSWORD){
         alert("Złe hasło");
         return;
@@ -450,17 +460,7 @@ adminListPassword.onchange = () => {
 function usunRezerwacje(id){
     db.ref('seats/'+id).remove();
 }
-    
-</script>
 
-    <div id="adminListModal">
-    <div class="modalContent" style="max-width:600px;">
-        <h3>Panel admina</h3>
-        <input type="password" id="adminListPassword" placeholder="Hasło">
-        <div id="adminListContent" style="max-height:300px; overflow:auto;"></div>
-        <button id="adminListClose">ZAMKNIJ</button>
-    </div>
-</div>
-    
+</script>
 </body>
 </html>
