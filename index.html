@@ -259,7 +259,7 @@ document.getElementById("saveModal").onclick=()=>{
         btn.dataset.name=name;
         db.ref('seats/'+id).set({name:name,occupied:true});
 
-        // Generowanie PDF biletu
+
         // Generowanie PDF biletu (TWÓJ SZABLON)
 (async () => {
 
@@ -286,7 +286,6 @@ document.getElementById("saveModal").onclick=()=>{
     link.click();
 
 })();
-    });
     selectedSeats=[];
     selectedCountDiv.innerText="Wybrane miejsca: 0";
     modal.style.display="none"; modalName.value="";
