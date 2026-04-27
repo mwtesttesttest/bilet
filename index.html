@@ -285,7 +285,7 @@ async function generujWszystkieBiletyPDF(name, seats){
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `BiletyUMLUBSHOW-17-05-2026.pdf`;
+    link.download = `Bilety.pdf`;
     link.click();
 
 }
