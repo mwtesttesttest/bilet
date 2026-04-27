@@ -163,6 +163,15 @@ input:focus {
 #seatCounts {
     display:flex; justify-content:center; gap:15px; margin-top:10px;
 }
+
+.rowLabel {
+    width: 40px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-weight:bold;
+    color:#333;
+}    
 </style>
 </head>
 <body>
@@ -248,8 +257,14 @@ document.addEventListener("mouseup", ()=>dragSelecting=false);
 
 // Tworzenie sali
 for(let row=1; row<=20; row++){
-    const rowDiv=document.createElement("div");
-    rowDiv.classList.add("row");
+const rowDiv=document.createElement("div");
+rowDiv.classList.add("row");
+
+const rowLabel = document.createElement("div");
+rowLabel.classList.add("rowLabel");
+rowLabel.innerText = row;
+
+rowDiv.appendChild(rowLabel);
     let seats=row===1?26:(row===20?14:28);
     for(let i=1; i<=seats; i++){
         if(row!==20){
@@ -324,7 +339,7 @@ async function generujWszystkieBiletyPDF(name, seats){
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `Bilety.pdf`;
+    link.download = `WSTEP_UMLUBSHOW2026.pdf`;
     link.click();
 
 }
