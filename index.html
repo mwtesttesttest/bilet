@@ -251,6 +251,39 @@ document.getElementById("reserveBtn").onclick=()=>{
 document.getElementById("cancelModal").onclick=()=>{modal.style.display="none"; modalName.value="";};
 
 // Zapis rezerwacji + PDF
+
+    async function generujWszystkieBiletyPDF(name, seats){
+
+    const existingPdfBytes = await fetch("bilet.pdf").then(res => res.arrayBuffer());
+    const basePdf = await PDFLib.PDFDocument.load(existingPdfBytes);
+
+    const finalPdf = await PDFLib.PDFDocument.create();
+
+    for(const seatId of seats){
+
+        const [templatePage] = await finalPdf.copyPages(basePdf, [0]);
+        finalPdf.addPage(templatePage);
+
+        const page = finalPdf.getPages()[finalPdf.getPageCount()-1];
+
+        const font = await finalPdf.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+        const row = seatId.match(/R(\d+)/)[1];
+        const seat = seatId.match(/M(\d+)/)[1];
+
+        page.drawText(name, { x: 120, y: 180, size: 12, font });
+        page.drawText(row,  { x: 285, y: 36,  size: 14, font });
+        page.drawText(seat, { x: 318, y: 36,  size: 14, font });
+    }
+
+    const pdfBytes = await finalPdf.save();
+
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Bilety.pdf`;
+    link.click();
+}
 document.getElementById("saveModal").onclick=()=>{
     const name=modalName.value.trim();
     if(!name) return alert("Podaj imię");
@@ -261,35 +294,11 @@ document.getElementById("saveModal").onclick=()=>{
         db.ref('seats/'+id).set({name:name,occupied:true});
 
         // Generowanie PDF biletu
-    async function generujBiletPDF(name, seatId){
-
-    const existingPdfBytes = await fetch("bilet.pdf").then(res => res.arrayBuffer());
-    const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
-    const page = pdfDoc.getPages()[0];
-
-    const font = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
-
-    const row = seatId.match(/R(\d+)/)[1];
-    const seat = seatId.match(/M(\d+)/)[1];
-
-    page.drawText(name, { x: 120, y: 180, size: 12, font });
-    page.drawText(row, { x: 285, y: 36, size: 14, font });
-    page.drawText(seat, { x: 319, y: 36, size: 14, font });
-
-    const pdfBytes = await pdfDoc.save();
-
-    const blob = new Blob([pdfBytes], { type: "application/pdf" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Bilet_${seatId}.pdf`;
-    link.click();
-}
-
-// 🔥 TO BYŁO BRAKUJĄCE
-generujBiletPDF(name, id);    
-
-  
+   
     });
+
+    generujWszystkieBiletyPDF(name, selectedSeats);
+    
     selectedSeats=[];
     selectedCountDiv.innerText="Wybrane miejsca: 0";
     modal.style.display="none"; modalName.value="";
