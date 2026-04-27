@@ -259,8 +259,6 @@ document.getElementById("saveModal").onclick=()=>{
         btn.dataset.name=name;
         db.ref('seats/'+id).set({name:name,occupied:true});
 
-
-        // Generowanie PDF biletu (TWÓJ SZABLON)
         // Generowanie PDF biletu
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({orientation:"landscape",unit:"mm",format:[100,60]});
@@ -273,12 +271,6 @@ document.getElementById("saveModal").onclick=()=>{
         pdf.text(`Miejsce: ${id.match(/M(\d+)/)[1]}`,10,45);
         pdf.save(`Bilet_${id}.pdf`);
     });
-    selectedSeats=[];
-    selectedCountDiv.innerText="Wybrane miejsca: 0";
-    modal.style.display="none"; modalName.value="";
-};
-
-     });
     selectedSeats=[];
     selectedCountDiv.innerText="Wybrane miejsca: 0";
     modal.style.display="none"; modalName.value="";
