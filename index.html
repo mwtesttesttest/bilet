@@ -261,7 +261,7 @@ document.getElementById("saveModal").onclick=()=>{
 
 
         // Generowanie PDF biletu (TWÓJ SZABLON)
-(async () => {
+for (const id of selectedSeats) {
 
     const existingPdfBytes = await fetch("bilet.pdf").then(res => res.arrayBuffer());
     const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
@@ -272,7 +272,6 @@ document.getElementById("saveModal").onclick=()=>{
     const row = id.match(/R(\d+)/)[1];
     const seat = id.match(/M(\d+)/)[1];
 
-    // 🔴 TE WSPÓŁRZĘDNE SĄ POD TWÓJ BILET
     page.drawText(name, { x: 45, y: 55, size: 12, font });
     page.drawText(row, { x: 360, y: 72, size: 18, font });
     page.drawText(seat, { x: 420, y: 72, size: 18, font });
@@ -284,8 +283,7 @@ document.getElementById("saveModal").onclick=()=>{
     link.href = URL.createObjectURL(blob);
     link.download = `Bilet_${id}.pdf`;
     link.click();
-
-})();
+}
      });
     selectedSeats=[];
     selectedCountDiv.innerText="Wybrane miejsca: 0";
