@@ -260,16 +260,53 @@ document.getElementById("saveModal").onclick=()=>{
         db.ref('seats/'+id).set({name:name,occupied:true});
 
         // Generowanie PDF biletu
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({orientation:"landscape",unit:"mm",format:[100,60]});
-        pdf.setFillColor(255,255,255);
-        pdf.rect(0,0,100,60,"F");
-        pdf.setFontSize(12);
-        pdf.text(`Bilet`,50,10,{align:"center"});
-        pdf.text(`Imię: ${name}`,10,25);
-        pdf.text(`Rząd: ${id.match(/R(\d+)/)[1]}`,10,35);
-        pdf.text(`Miejsce: ${id.match(/M(\d+)/)[1]}`,10,45);
-        pdf.save(`Bilet_${id}.pdf`);
+        
+async function generujBiletPDF(name, seatId){
+
+    const existingPdfBytes = await fetch("bilet.pdf").then(res => res.arrayBuffer());
+    const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+    const page = pdfDoc.getPages()[0];
+
+    const font = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+    const row = seatId.match(/R(\d+)/)[1];
+    const seat = seatId.match(/M(\d+)/)[1];
+
+    // 🔴 DOPASUJ TE WSPÓŁRZĘDNE DO BIAŁYCH POL
+    // (to jest kluczowy moment)
+
+    // Imię i nazwisko
+    page.drawText(name, {
+        x: 120,
+        y: 180,
+        size: 12,
+        font: font
+    });
+
+    // RZĄD (białe pole)
+    page.drawText(row, {
+        x: 300,
+        y: 120,
+        size: 14,
+        font: font
+    });
+
+    // MIEJSCE (białe pole)
+    page.drawText(seat, {
+        x: 420,
+        y: 120,
+        size: 14,
+        font: font
+    });
+
+    const pdfBytes = await pdfDoc.save();
+
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Bilet_${seatId}.pdf`;
+    link.click();
+}
     });
     selectedSeats=[];
     selectedCountDiv.innerText="Wybrane miejsca: 0";
