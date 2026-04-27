@@ -251,22 +251,22 @@ document.getElementById("reserveBtn").onclick=()=>{
 document.getElementById("cancelModal").onclick=()=>{modal.style.display="none"; modalName.value="";};
 
 // Zapis rezerwacji + PDF
-
-    async function generujWszystkieBiletyPDF(name, seats){
+async function generujWszystkieBiletyPDF(name, seats){
 
     const existingPdfBytes = await fetch("bilet.pdf").then(res => res.arrayBuffer());
     const basePdf = await PDFLib.PDFDocument.load(existingPdfBytes);
 
     const finalPdf = await PDFLib.PDFDocument.create();
 
+    const font = await finalPdf.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+    // 👉 STRONA 1 (z danymi) dla każdego biletu
     for(const seatId of seats){
 
-        const [templatePage] = await finalPdf.copyPages(basePdf, [0]);
-        finalPdf.addPage(templatePage);
+        const [pageTemplate] = await finalPdf.copyPages(basePdf, [0]);
+        finalPdf.addPage(pageTemplate);
 
         const page = finalPdf.getPages()[finalPdf.getPageCount()-1];
-
-        const font = await finalPdf.embedFont(PDFLib.StandardFonts.HelveticaBold);
 
         const row = seatId.match(/R(\d+)/)[1];
         const seat = seatId.match(/M(\d+)/)[1];
@@ -276,13 +276,18 @@ document.getElementById("cancelModal").onclick=()=>{modal.style.display="none"; 
         page.drawText(seat, { x: 318, y: 36,  size: 14, font });
     }
 
+    // 👉 STRONA 2 (QR) tylko raz na końcu
+    const [qrPage] = await finalPdf.copyPages(basePdf, [1]);
+    finalPdf.addPage(qrPage);
+
     const pdfBytes = await finalPdf.save();
 
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `Bilety.pdf`;
+    link.download = `BiletyUMLUBSHOW-17-05-2026.pdf`;
     link.click();
+
 }
 document.getElementById("saveModal").onclick=()=>{
     const name=modalName.value.trim();
