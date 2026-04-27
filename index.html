@@ -222,7 +222,7 @@ input:focus {
     </div>
 </div>
 
-    document.getElementById("adminListLogin").onclick = () => {
+   document.getElementById("adminListLogin").onclick = () => {
 
     const pass = document.getElementById("adminListPassword").value;
 
@@ -250,6 +250,16 @@ input:focus {
             adminListContent.appendChild(div);
         });
     });
+};
+
+document.getElementById("adminListClose").onclick = () => {
+    document.getElementById("adminListModal").style.display = "none";
+    document.getElementById("adminListPassword").value = "";
+    document.getElementById("adminListContent").innerHTML = "";
+};
+
+document.getElementById("adminPanelBtn").onclick = () => {
+    document.getElementById("adminListModal").style.display = "flex";
 };
     
 <script>
