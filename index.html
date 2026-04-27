@@ -430,10 +430,11 @@ adminListClose.onclick = () => {
     adminListPassword.value = "";
     adminListContent.innerHTML = "";
 };
-
 adminListPassword.oninput = () => {
 
-    adminListContent.innerHTML = "";
+    if(adminListPassword.value.length < ADMIN_PASSWORD.length){
+        return;
+    }
 
     if(adminListPassword.value !== ADMIN_PASSWORD){
         return;
