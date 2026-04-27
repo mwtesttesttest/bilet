@@ -16,6 +16,16 @@
 <style>
 body { font-family: Arial; margin:0; padding:0; background:#f4f4f4; }
 
+    #adminListModal {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    justify-content:center;
+    align-items:center;
+    z-index:300;
+}
+    
 /* top bar */
 .top-bar {
     margin: 20px 0;
@@ -24,8 +34,24 @@ body { font-family: Arial; margin:0; padding:0; background:#f4f4f4; }
     gap: 5px;
     flex-wrap: wrap;
 }
-input { padding: 5px; min-width: 100px; }
-button { padding: 5px 10px; cursor: pointer; }
+input {
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    outline: none;
+    transition: 0.2s;
+}
+
+input:focus {
+    border-color: #4caf50;
+    box-shadow: 0 0 8px rgba(76,175,80,0.5);
+}
+.top-bar button {
+    border-radius: 20px;
+    background:#4caf50;
+    color:white;
+    border:none;
+}
 
 /* scena */
 .stage {
@@ -142,6 +168,9 @@ button { padding: 5px 10px; cursor: pointer; }
 <body>
 
 <div class="top-bar">
+    <button id="adminPanelBtn" style="position:fixed; top:10px; right:10px; z-index:300;">
+⚙️ ADMIN
+</button>
     🔍 <input type="text" id="search" placeholder="Szukaj osoby">
     <button onclick="searchPerson()">Szukaj</button>
 </div>
@@ -258,7 +287,7 @@ async function generujWszystkieBiletyPDF(name, seats){
 
     const finalPdf = await PDFLib.PDFDocument.create();
 
-    const font = await finalPdf.embedFont(PDFLib.StandardFonts.HelveticaBold);
+    const font = await finalPdf.embedFont(PDFLib.StandardFonts.Helvetica);
 
     // 👉 STRONA 1 (z danymi) dla każdego biletu
     for(const seatId of seats){
@@ -396,7 +425,63 @@ window.addEventListener("load",()=>{
     const container=document.getElementById("hall-container");
     container.scrollLeft=(container.scrollWidth-container.clientWidth)/2;
 });
+
+const adminPanelBtn = document.getElementById("adminPanelBtn");
+const adminListModal = document.getElementById("adminListModal");
+const adminListPassword = document.getElementById("adminListPassword");
+const adminListContent = document.getElementById("adminListContent");
+const adminListClose = document.getElementById("adminListClose");
+
+adminPanelBtn.onclick = () => {
+    adminListModal.style.display = "flex";
+};
+
+adminListClose.onclick = () => {
+    adminListModal.style.display = "none";
+    adminListPassword.value = "";
+    adminListContent.innerHTML = "";
+};
+
+adminListPassword.onchange = () => {
+    if(adminListPassword.value !== ADMIN_PASSWORD){
+        alert("Złe hasło");
+        return;
+    }
+
+    db.ref('seats').once('value', snapshot=>{
+        const data = snapshot.val() || {};
+        adminListContent.innerHTML = "";
+
+        Object.keys(data).forEach(id=>{
+            const row = id.match(/R(\d+)/)[1];
+            const seat = id.match(/M(\d+)/)[1];
+
+            const div = document.createElement("div");
+
+            div.innerHTML = `
+                ${data[id].name} | R${row} M${seat}
+                <button onclick="usunRezerwacje('${id}')">❌</button>
+            `;
+
+            adminListContent.appendChild(div);
+        });
+    });
+};
+
+function usunRezerwacje(id){
+    db.ref('seats/'+id).remove();
+}
+    
 </script>
 
+    <div id="adminListModal">
+    <div class="modalContent" style="max-width:600px;">
+        <h3>Panel admina</h3>
+        <input type="password" id="adminListPassword" placeholder="Hasło">
+        <div id="adminListContent" style="max-height:300px; overflow:auto;"></div>
+        <button id="adminListClose">ZAMKNIJ</button>
+    </div>
+</div>
+    
 </body>
 </html>
