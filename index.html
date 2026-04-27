@@ -13,41 +13,23 @@
 <style>
 body { font-family: Arial; margin:0; padding:0; background:#f4f4f4; }
 
-/* top bar */
+/* 🔥 ulepszony search */
 .top-bar {
     margin: 20px 0;
     display: flex;
     justify-content: center;
-    gap: 5px;
-    flex-wrap: wrap;
+    gap: 10px;
 }
-
-/* 🔥 ulepszone input */
 input {
-    padding: 8px 12px;
-    border-radius: 20px;
+    padding: 10px;
+    min-width: 220px;
+    border-radius: 8px;
     border: 1px solid #ccc;
-    outline: none;
-}
-input:focus {
-    border-color: #4caf50;
-    box-shadow: 0 0 8px rgba(76,175,80,0.5);
-}
-
-/* 🔥 ulepszony button */
-.top-bar button {
-    border-radius: 20px;
-    background:#4caf50;
-    color:white;
-    border:none;
-    padding: 8px 15px;
-    cursor:pointer;
 }
 
 button { padding: 5px 10px; cursor: pointer; }
 
 .stage {
-    position: relative;
     width: min(800px, 95vw);
     height: 40px;
     background-color: #d2a679;
@@ -82,7 +64,6 @@ button { padding: 5px 10px; cursor: pointer; }
     justify-content: center;
     align-items: center;
 }
-
 .selected { background: orange; }
 .occupied { background: gray; cursor: not-allowed; }
 .highlight { outline: 3px solid yellow; }
@@ -90,50 +71,18 @@ button { padding: 5px 10px; cursor: pointer; }
 .gap { width: min(15px,2vw); }
 .big-gap { height: min(25px,3vw); }
 
-#selectedCount, #freeCount, #occupiedCount {
-    margin-top: 10px;
-    text-align: center;
-    font-weight: bold;
-}
-
-#reserveBtn { display: block; margin: 20px auto; padding: 12px 25px; }
-
-#modal, #adminModal, #adminListModal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    justify-content: center;
-    align-items: center;
-    z-index: 200;
-}
-
-.modalContent {
-    background: #f9f9f9;
-    padding: 25px;
-    border-radius: 15px;
-    width: 90%;
-    max-width: 450px;
-}
-
-/* 🔥 admin button */
-#adminPanelBtn {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 300;
+#seatCounts {
+    display:flex; justify-content:center; gap:15px; margin-top:10px;
 }
 </style>
 </head>
+
 <body>
 
 <div class="top-bar">
     🔍 <input type="text" id="search" placeholder="Szukaj osoby">
     <button onclick="searchPerson()">Szukaj</button>
 </div>
-
-<!-- 🔥 ADMIN BUTTON -->
-<button id="adminPanelBtn">⚙️</button>
 
 <div class="stage"></div>
 
@@ -149,101 +98,152 @@ button { padding: 5px 10px; cursor: pointer; }
 
 <button id="reserveBtn">ZAREZERWUJ</button>
 
-<!-- MODALE -->
+<!-- modal -->
 <div id="modal">
-    <div class="modalContent">
-        <input type="text" id="modalName">
-        <button id="saveModal">ZAPISZ</button>
-    </div>
+<div class="modalContent">
+<input id="modalName">
+<button id="saveModal">ZAPISZ</button>
+</div>
 </div>
 
-<div id="adminListModal">
-    <div class="modalContent">
-        <input type="password" id="adminListPassword">
-        <div id="adminListContent"></div>
-        <button id="adminListClose">ZAMKNIJ</button>
-    </div>
+<!-- 🔥 PANEL ADMINA -->
+<button id="adminPanelBtn" style="position:fixed;bottom:15px;right:15px;">ADMIN</button>
+
+<div id="adminPanel" style="display:none;position:fixed;right:0;top:0;width:300px;height:100%;background:white;overflow:auto;">
+    <h3>Rezerwacje</h3>
+    <div id="adminList"></div>
 </div>
 
 <script>
-const firebaseConfig = { apiKey:"x", databaseURL:"x" };
+
+// Firebase
+const firebaseConfig = { databaseURL:"https://salarezerwacji-default-rtdb.firebaseio.com" };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const hall = document.getElementById("hall");
 let selectedSeats = [];
 
+// 🔥 generowanie sali + numery rzędów
 for(let row=1; row<=20; row++){
+
     const rowDiv=document.createElement("div");
     rowDiv.classList.add("row");
 
     for(let i=1;i<=20;i++){
-        const id=`R${row}M${i}`;
+        const seatId=`R${row}M${i}`;
         const btn=document.createElement("button");
         btn.classList.add("seat");
+        btn.id=seatId;
         btn.innerText=i;
 
         btn.onclick=()=>{
+            if(btn.classList.contains("occupied")) return;
             btn.classList.toggle("selected");
-            selectedSeats.push(id);
-        }
+
+            if(selectedSeats.includes(seatId))
+                selectedSeats=selectedSeats.filter(s=>s!==seatId);
+            else selectedSeats.push(seatId);
+        };
 
         rowDiv.appendChild(btn);
     }
 
-    /* 🔥 NUMER RZĘDU */
     const wrapper=document.createElement("div");
     wrapper.style.display="flex";
     wrapper.appendChild(rowDiv);
 
     const label=document.createElement("div");
     label.innerText=row;
-    label.style.marginLeft="5px";
+    label.style.marginLeft="10px";
     wrapper.appendChild(label);
 
     hall.appendChild(wrapper);
 }
 
-/* 🔥 ADMIN PANEL */
-document.getElementById("adminPanelBtn").onclick=()=>{
-    document.getElementById("adminListModal").style.display="flex";
-};
+// 🔥 PDF (tylko zmniejszona czcionka)
+async function generujWszystkieBiletyPDF(name, seats){
 
-document.getElementById("adminListPassword").onchange=()=>{
-    if(this.value!=="tajnehaslo") return alert("zle haslo");
+    const existingPdfBytes = await fetch("bilet.pdf").then(res => res.arrayBuffer());
+    const basePdf = await PDFLib.PDFDocument.load(existingPdfBytes);
+    const finalPdf = await PDFLib.PDFDocument.create();
 
-    db.ref("seats").once("value",snap=>{
-        const data=snap.val()||{};
-        const box=document.getElementById("adminListContent");
-        box.innerHTML="";
+    const font = await finalPdf.embedFont(PDFLib.StandardFonts.HelveticaBold);
 
-        Object.keys(data).forEach(id=>{
-            const d=data[id];
+    for(const seatId of seats){
 
-            const el=document.createElement("div");
-            el.innerHTML=`${d.name} ${id} <button onclick="db.ref('seats/${id}').remove()">X</button>`;
-            box.appendChild(el);
-        });
-    });
-};
+        const [pageTemplate] = await finalPdf.copyPages(basePdf, [0]);
+        finalPdf.addPage(pageTemplate);
 
-/* 🔥 PDF (ładniejsza czcionka) */
-async function generujWszystkieBiletyPDF(name,seats){
-    const pdf=await PDFLib.PDFDocument.create();
-    const font=await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+        const page = finalPdf.getPages()[finalPdf.getPageCount()-1];
 
-    seats.forEach(s=>{
-        const page=pdf.addPage();
-        page.drawText(name,{x:100,y:200,size:10,font});
-    });
+        const row = seatId.match(/R(\d+)/)[1];
+        const seat = seatId.match(/M(\d+)/)[1];
 
-    const bytes=await pdf.save();
-    const link=document.createElement("a");
-    link.href=URL.createObjectURL(new Blob([bytes]));
-    link.download="bilety.pdf";
+        page.drawText(name, { x:120, y:180, size:11, font });
+        page.drawText(row, { x:300, y:36, size:11, font });
+        page.drawText(seat,{ x:330, y:36, size:11, font });
+    }
+
+    const [qrPage] = await finalPdf.copyPages(basePdf, [1]);
+    finalPdf.addPage(qrPage);
+
+    const pdfBytes = await finalPdf.save();
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([pdfBytes]));
+    link.download = "Bilety.pdf";
     link.click();
 }
-</script>
 
+// zapis
+document.getElementById("saveModal").onclick=()=>{
+    const name=document.getElementById("modalName").value;
+
+    selectedSeats.forEach(id=>{
+        db.ref('seats/'+id).set({name:name,occupied:true});
+    });
+
+    generujWszystkieBiletyPDF(name, selectedSeats);
+    selectedSeats=[];
+};
+
+// 🔥 ADMIN PANEL
+const ADMIN_PASSWORD="tajnehaslo";
+
+document.getElementById("adminPanelBtn").onclick=()=>{
+    const pass=prompt("Hasło:");
+    if(pass!==ADMIN_PASSWORD) return;
+    document.getElementById("adminPanel").style.display="block";
+};
+
+db.ref('seats').on('value', snapshot=>{
+    const data=snapshot.val()||{};
+    const list=document.getElementById("adminList");
+    list.innerHTML="";
+
+    Object.keys(data).forEach(id=>{
+        const div=document.createElement("div");
+        div.innerHTML=`${data[id].name} (${id}) <button onclick="usun('${id}')">X</button>`;
+        list.appendChild(div);
+    });
+});
+
+function usun(id){
+    db.ref('seats/'+id).remove();
+}
+
+// wyszukiwarka
+function searchPerson(){
+    const val=document.getElementById("search").value.toLowerCase();
+
+    document.querySelectorAll(".seat").forEach(btn=>{
+        btn.classList.remove("highlight");
+        if(btn.dataset.name && btn.dataset.name.toLowerCase().includes(val))
+            btn.classList.add("highlight");
+    });
+}
+
+</script>
 </body>
 </html>
