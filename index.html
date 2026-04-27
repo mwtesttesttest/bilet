@@ -273,8 +273,8 @@ document.getElementById("saveModal").onclick=()=>{
     const seat = seatId.match(/M(\d+)/)[1];
 
     page.drawText(name, { x: 120, y: 180, size: 12, font });
-    page.drawText(row, { x: 284, y: 38, size: 14, font });
-    page.drawText(seat, { x: 320, y: 38, size: 14, font });
+    page.drawText(row, { x: 285, y: 36, size: 14, font });
+    page.drawText(seat, { x: 318, y: 36, size: 14, font });
 
     const pdfBytes = await pdfDoc.save();
 
