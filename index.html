@@ -217,50 +217,10 @@ input:focus {
         <h3>Panel admina</h3>
         <input type="password" id="adminListPassword" placeholder="Hasło">
         <div id="adminListContent" style="max-height:300px; overflow:auto;"></div>
-        <button id="adminListLogin">WEJDŹ</button>
         <button id="adminListClose">ZAMKNIJ</button>
     </div>
 </div>
 
-   document.getElementById("adminListLogin").onclick = () => {
-
-    const pass = document.getElementById("adminListPassword").value;
-
-    if(pass !== ADMIN_PASSWORD){
-        alert("Złe hasło");
-        return;
-    }
-
-    db.ref('seats').once('value', snapshot=>{
-        const data = snapshot.val() || {};
-        const adminListContent = document.getElementById("adminListContent");
-        adminListContent.innerHTML = "";
-
-        Object.keys(data).forEach(id=>{
-            const row = id.match(/R(\d+)/)[1];
-            const seat = id.match(/M(\d+)/)[1];
-
-            const div = document.createElement("div");
-
-            div.innerHTML = `
-                ${data[id].name} | R${row} M${seat}
-                <button onclick="usunRezerwacje('${id}')">❌</button>
-            `;
-
-            adminListContent.appendChild(div);
-        });
-    });
-};
-
-document.getElementById("adminListClose").onclick = () => {
-    document.getElementById("adminListModal").style.display = "none";
-    document.getElementById("adminListPassword").value = "";
-    document.getElementById("adminListContent").innerHTML = "";
-};
-
-document.getElementById("adminPanelBtn").onclick = () => {
-    document.getElementById("adminListModal").style.display = "flex";
-};
     
 <script>
 // Firebase
@@ -471,7 +431,11 @@ adminListClose.onclick = () => {
     adminListContent.innerHTML = "";
 };
 
-
+adminListPassword.oninput = () => {
+    if(adminListPassword.value !== ADMIN_PASSWORD){
+        alert("Złe hasło");
+        return;
+    }
 
     db.ref('seats').once('value', snapshot=>{
         const data = snapshot.val() || {};
